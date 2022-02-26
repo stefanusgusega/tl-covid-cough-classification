@@ -81,7 +81,7 @@ def convert_audio_to_numpy(
 
     samples = []
 
-    for _, row in tqdm(df.iterrows()):
+    for _, row in tqdm(df.iterrows(), total=len(df)):
         filename = row[filename_colname] + row[ext_colname]
         # Sampling rate is not returned because it will make worse memory usage
         audio_data, _ = librosa.load(
