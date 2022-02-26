@@ -99,7 +99,7 @@ def convert_audio_to_numpy(
                 "Please specify the path that you wish to dump the result of this conversion."
             )
         # Then dump it
-        with (open(path_dump, "wb") as f):
+        with (open(path_dump, "wb")) as f:
             pkl.dump(res, f)
 
     return res
