@@ -1,4 +1,5 @@
 from typing import Tuple
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import librosa
@@ -80,7 +81,7 @@ def convert_audio_to_numpy(
 
     samples = []
 
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows()):
         filename = row[filename_colname] + row[ext_colname]
         # Sampling rate is not returned because it will make worse memory usage
         audio_data, _ = librosa.load(
