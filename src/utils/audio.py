@@ -7,7 +7,7 @@ import os
 import pickle as pkl
 
 
-def generate_cough_mask(
+def generate_cough_segments(
     x, fs, cough_padding=0.2, min_cough_len=0.2, th_l_multiplier=0.1, th_h_multiplier=2
 ):
     """Preprocess the data by segmenting each file into individual coughs using a hysteresis comparator on the signal power
@@ -51,13 +51,14 @@ def generate_cough_mask(
                 if below_th_counter > tolerance:
                     cough_end = i + padding if (i + padding < len(x)) else len(x) - 1
                     cough_in_progress = False
-                    if cough_end + 1 - cough_start - 2 * padding > min_cough_samples:
+                    if cough_end + 1 - cough_start - 2 * padding >= min_cough_samples:
                         cough_segments.append(x[cough_start : cough_end + 1])
                         cough_mask[cough_start : cough_end + 1] = True
+            # Else if the end of samples
             elif i == (len(x) - 1):
                 cough_end = i
                 cough_in_progress = False
-                if cough_end + 1 - cough_start - 2 * padding > min_cough_samples:
+                if cough_end + 1 - cough_start - 2 * padding >= min_cough_samples:
                     cough_segments.append(x[cough_start : cough_end + 1])
             else:
                 below_th_counter = 0
@@ -76,6 +77,7 @@ def convert_audio_to_numpy(
     sampling_rate: int = 16000,
     filename_colname: str = "uuid",
     ext_colname: str = "ext",
+    covid_status_colname: str = "status",
     save_to_pickle: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -90,7 +92,7 @@ def convert_audio_to_numpy(
         samples.append(audio_data)
 
     # Get the return for this function
-    res = np.array(samples).reshape(-1, 1), np.full((len(df), 1), sampling_rate)
+    res = np.array(samples).reshape(-1, 1), np.full((len(df), 1), covid_status_colname)
 
     # Save to pickle file
     if save_to_pickle:
@@ -106,5 +108,38 @@ def convert_audio_to_numpy(
     return res
 
 
-def segment_cough(original_audio: np.ndarray, cough_mask: np.ndarray) -> np.ndarray:
-    ...
+def segment_cough_and_label(
+    original_audio: np.ndarray, covid_status: str, sampling_rate: int = 16000
+) -> Tuple[np.ndarray, np.ndarray]:
+
+    cough_segments, _ = generate_cough_segments(original_audio, sampling_rate)
+
+    segments = [np.array(segment) for segment in cough_segments]
+
+    return np.array(segments).reshape(-1, 1), np.full(
+        (len(cough_segments), 1), covid_status
+    )
+
+
+def generate_segmented_data(
+    samples_data: np.ndarray, covid_status_data: np.ndarray, sampling_rate: int = 16000
+) -> Tuple[np.ndarray, np.ndarray]:
+
+    if len(samples_data) != len(covid_status_data):
+        raise Exception(
+            f"The length of the samples data and covid status data is not same. {len(samples_data)} != {len(covid_status_data)}"
+        )
+
+    new_data = []
+    status_data = []
+
+    for data, status_data in tqdm(
+        zip(samples_data, covid_status_data), total=len(samples_data)
+    ):
+        segments, labels = segment_cough_and_label(
+            data, status_data, sampling_rate=sampling_rate
+        )
+        new_data.append(segments)
+        status_data.append(labels)
+
+    return np.array(new_data).flatten(), np.array(status_data).flatten()
