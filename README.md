@@ -9,3 +9,9 @@ This is the repository for my final project in Institut Teknologi Bandung called
 ```bash
 source env/Scripts/activate
 ```
+
+- Or this script on Command Prompt
+
+```bash
+env\Scripts\activate
+```
