@@ -80,6 +80,7 @@ def convert_audio_to_numpy(
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     samples = []
+    statuses = []
 
     print("Converting audio to numpy array...")
 
@@ -90,8 +91,9 @@ def convert_audio_to_numpy(
             os.path.join(audio_folder_path, filename), sr=sampling_rate
         )
         samples.append(audio_data)
+        statuses.append(row[covid_status_colname])
 
-    return np.array(samples).reshape(-1, 1), np.full((len(df), 1), covid_status_colname)
+    return np.array(samples), np.array(statuses)
 
 
 def segment_cough_and_label(
