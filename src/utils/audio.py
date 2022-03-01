@@ -73,12 +73,10 @@ def generate_cough_segments(
 def convert_audio_to_numpy(
     df: pd.DataFrame,
     audio_folder_path: str,
-    path_dump=None,
     sampling_rate: int = 16000,
     filename_colname: str = "uuid",
     ext_colname: str = "ext",
     covid_status_colname: str = "status",
-    save_to_pickle: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     samples = []
@@ -91,21 +89,7 @@ def convert_audio_to_numpy(
         )
         samples.append(audio_data)
 
-    # Get the return for this function
-    res = np.array(samples).reshape(-1, 1), np.full((len(df), 1), covid_status_colname)
-
-    # Save to pickle file
-    if save_to_pickle:
-        # Check if path_dump is specified, if not so raise an exception
-        if path_dump is None:
-            raise Exception(
-                "Please specify the path that you wish to dump the result of this conversion."
-            )
-        # Then dump it
-        with (open(path_dump, "wb")) as f:
-            pkl.dump(res, f)
-
-    return res
+    return np.array(samples).reshape(-1, 1), np.full((len(df), 1), covid_status_colname)
 
 
 def segment_cough_and_label(
@@ -142,4 +126,4 @@ def generate_segmented_data(
         new_data.append(segments)
         status_data.append(labels)
 
-    return np.array(new_data).flatten(), np.array(status_data).flatten()
+    return np.array(new_data).flatten(), np.array(status_data).reshape(-1, 1)
