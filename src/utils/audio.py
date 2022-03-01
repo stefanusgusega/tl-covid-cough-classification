@@ -81,6 +81,8 @@ def convert_audio_to_numpy(
 
     samples = []
 
+    print("Converting audio to numpy array...")
+
     for _, row in tqdm(df.iterrows(), total=len(df)):
         filename = row[filename_colname] + row[ext_colname]
         # Sampling rate is not returned because it will make worse memory usage
@@ -116,6 +118,8 @@ def generate_segmented_data(
 
     new_data = []
     status_data = []
+
+    print("Segmenting audio data...")
 
     for data, status_data in tqdm(
         zip(samples_data, covid_status_data), total=len(samples_data)
