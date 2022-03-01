@@ -20,6 +20,8 @@ def preprocess_dataframe(
         numpy_data, covid_statuses, sampling_rate=sampling_rate
     )
 
+    # TO-DO: feature extraction and check segmentation
+
     res = segmented_data, segmented_covid_status
 
     # Save to pickle file
@@ -32,3 +34,7 @@ def preprocess_dataframe(
         # Then dump it
         with (open(path_dump, "wb")) as f:
             pkl.dump(res, f)
+
+    # Returning series of data in (-1, 1) shape and the labels in (-1, 1) too
+    # NOW : segmented_data in (-1, 1) shape
+    return res
