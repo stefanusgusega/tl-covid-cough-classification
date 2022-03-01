@@ -128,7 +128,7 @@ def generate_segmented_data(
             data, status_data, sampling_rate=sampling_rate
         )
         new_data.append(segments)
-        status_data.append(labels)
+        statuses_data.append(labels)
 
     new_data = np.array(new_data)
     statuses_data = np.array(statuses_data)
