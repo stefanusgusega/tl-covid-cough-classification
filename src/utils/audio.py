@@ -104,9 +104,7 @@ def segment_cough_and_label(
 
     segments = [np.array(segment) for segment in cough_segments]
 
-    return np.array(segments).reshape(-1, 1), np.full(
-        (len(cough_segments), 1), covid_status
-    )
+    return np.array(segments), np.full((len(cough_segments),), covid_status)
 
 
 def generate_segmented_data(
@@ -119,7 +117,7 @@ def generate_segmented_data(
         )
 
     new_data = []
-    status_data = []
+    statuses_data = []
 
     print("Segmenting audio data...")
 
@@ -132,4 +130,9 @@ def generate_segmented_data(
         new_data.append(segments)
         status_data.append(labels)
 
-    return np.array(new_data).flatten(), np.array(status_data).reshape(-1, 1)
+    new_data = np.array(new_data)
+    statuses_data = np.array(statuses_data)
+
+    return np.concatenate(new_data).reshape(-1, 1), np.concatenate(status_data).reshape(
+        -1, 1
+    )
