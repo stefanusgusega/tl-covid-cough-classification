@@ -4,11 +4,10 @@ import numpy as np
 import pandas as pd
 import librosa
 import os
-import pickle as pkl
 
 
 def generate_cough_segments(
-    x, fs, cough_padding=0.2, min_cough_len=0.2, th_l_multiplier=0.1, th_h_multiplier=2
+    x, fs, cough_padding=0.1, min_cough_len=0.2, th_l_multiplier=0.1, th_h_multiplier=2
 ):
     """Preprocess the data by segmenting each file into individual coughs using a hysteresis comparator on the signal power
 
@@ -41,7 +40,7 @@ def generate_cough_segments(
     cough_start = 0
     cough_end = 0
     cough_in_progress = False
-    tolerance = round(0.01 * fs)
+    tolerance = round(0.05 * fs)
     below_th_counter = 0
 
     for i, sample in enumerate(x**2):
