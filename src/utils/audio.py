@@ -133,9 +133,7 @@ def generate_segmented_data(
     new_data = np.array(new_data)
     statuses_data = np.array(statuses_data)
 
-    return np.concatenate(new_data).reshape(-1, 1), np.concatenate(
-        statuses_data
-    ).reshape(-1, 1)
+    return np.concatenate(new_data), np.concatenate(statuses_data).reshape(-1, 1)
 
 
 def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
@@ -163,7 +161,7 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
         pad_end = np.zeros(pad_end_len)
 
         # Concat
-        new_data = np.concatenate(pad_begin, audio, pad_end)
+        new_data = np.concatenate((pad_begin, audio, pad_end))
 
         # Append
         new_audio_datas.append(new_data)
