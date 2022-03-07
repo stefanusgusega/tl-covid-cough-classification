@@ -2,13 +2,22 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pickle as pkl
-from utils.audio import convert_audio_to_numpy, generate_segmented_data
+from utils.audio import (
+    convert_audio_to_numpy,
+    extract_melspec,
+    generate_segmented_data,
+    pad_audio_with_silence,
+)
 
 
 def preprocess_dataframe(
     df: pd.DataFrame,
     audio_folder_path: str,
     sampling_rate: int = 16000,
+    n_fft: int = None,
+    hop_length: int = None,
+    win_length: int = None,
+    is_mel_spec: bool = True,
     save_to_pickle=True,
     path_dump=None,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -20,9 +29,25 @@ def preprocess_dataframe(
         numpy_data, covid_statuses, sampling_rate=sampling_rate
     )
 
-    # TO-DO: feature extraction and check segmentation
+    # Pad the data
+    padded_data = pad_audio_with_silence(segmented_data)
 
-    res = segmented_data, segmented_covid_status
+    # Data augmentation
+    balanced_data = padded_data
+
+    # Feature extraction
+    if is_mel_spec:
+        features = extract_melspec(
+            balanced_data,
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+        )
+
+    # TO-DO: data augmenttion and MFCC
+
+    res = features, segmented_covid_status
 
     # Save to pickle file
     if save_to_pickle:
@@ -36,5 +61,5 @@ def preprocess_dataframe(
             pkl.dump(res, f)
 
     # Returning series of data in (-1, 1) shape and the labels in (-1, 1) too
-    # NOW : segmented_data in (-1,) shape
+    # NOW : features in 2D shape
     return res
