@@ -1,4 +1,5 @@
 from typing import Tuple
+from scipy import signal
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -187,6 +188,7 @@ def extract_melspec(
             n_fft=n_fft,
             hop_length=hop_length,
             win_length=win_length,
+            window=signal.windows.hamming,
         )
 
         # Change to decibels instead of amplitude
