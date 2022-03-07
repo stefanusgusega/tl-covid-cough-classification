@@ -169,10 +169,29 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
     return np.array(new_audio_datas)
 
 
-def extract_melspec(audio_datas: np.ndarray) -> np.ndarray:
+def extract_melspec(
+    audio_datas: np.ndarray,
+    sampling_rate: int,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: int = None,
+) -> np.ndarray:
     # Initiate new container
     mel_specs = []
 
     # For each audio
     for audio in audio_datas:
-        ...
+        mel_spec = librosa.feature.melspectrogram(
+            audio,
+            sr=sampling_rate,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+        )
+
+        # Change to decibels instead of amplitude
+        log_mel_spec = librosa.power_to_db(mel_spec)
+
+        mel_specs.append(log_mel_spec)
+
+    return np.array(mel_specs)
