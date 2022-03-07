@@ -167,3 +167,12 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
         new_audio_datas.append(new_data)
 
     return np.array(new_audio_datas)
+
+
+def extract_melspec(audio_datas: np.ndarray) -> np.ndarray:
+    # Initiate new container
+    mel_specs = []
+
+    # For each audio
+    for audio in audio_datas:
+        ...
