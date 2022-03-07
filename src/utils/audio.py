@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import librosa
 import os
+import random
 
 
 def generate_cough_segments(
@@ -135,3 +136,36 @@ def generate_segmented_data(
     return np.concatenate(new_data).reshape(-1, 1), np.concatenate(
         statuses_data
     ).reshape(-1, 1)
+
+
+def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
+    # Search for the longest duration
+    # Map to audio length
+    audio_length = lambda x: len(x)
+    audio_length_func = np.vectorize(audio_length)
+    audio_length_arr = audio_length_func(audio_datas)
+
+    # Get the max length
+    max_length = max(audio_length_arr)
+
+    new_audio_datas = []
+
+    # For each audio
+    for audio in audio_datas:
+        # Pad the beginning audio
+        pad_begin_len = random.randint(0, max_length - len(audio))
+
+        # Pad the ending audio
+        pad_end_len = max_length - len(audio) - pad_begin_len
+
+        # Create zeros array
+        pad_begin = np.zeros(pad_begin_len)
+        pad_end = np.zeros(pad_end_len)
+
+        # Concat
+        new_data = np.concatenate(pad_begin, audio, pad_end)
+
+        # Append
+        new_audio_datas.append(new_data)
+
+    return np.array(new_audio_datas)
