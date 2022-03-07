@@ -36,5 +36,5 @@ def preprocess_dataframe(
             pkl.dump(res, f)
 
     # Returning series of data in (-1, 1) shape and the labels in (-1, 1) too
-    # NOW : segmented_data in (-1, 1) shape
+    # NOW : segmented_data in (-1,) shape
     return res
