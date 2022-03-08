@@ -73,4 +73,4 @@ def get_pos_neg_diff(
     pos_df = df[df[column_name] == pos_label]
     neg_df = df[df[column_name] == neg_label]
 
-    return abs(neg_df - pos_df)
+    return abs(len(neg_df) - len(pos_df))
