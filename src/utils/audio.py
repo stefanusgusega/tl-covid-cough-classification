@@ -149,8 +149,10 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
 
     new_audio_datas = []
 
+    print("Padding audio with silence...")
+
     # For each audio
-    for audio in audio_datas:
+    for audio in tqdm(audio_datas):
         # Pad the beginning audio
         pad_begin_len = random.randint(0, max_length - len(audio))
 
@@ -170,6 +172,10 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
     return np.array(new_audio_datas)
 
 
+def augment_data(audio_datas: np.ndarray) -> np.ndarray:
+    ...
+
+
 def extract_melspec(
     audio_datas: np.ndarray,
     sampling_rate: int,
@@ -180,8 +186,10 @@ def extract_melspec(
     # Initiate new container
     mel_specs = []
 
+    print("Extracting mel spectrograms from audio...")
+
     # For each audio
-    for audio in audio_datas:
+    for audio in tqdm(audio_datas):
         mel_spec = librosa.feature.melspectrogram(
             audio,
             sr=sampling_rate,
