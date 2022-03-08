@@ -1,3 +1,4 @@
+from audiomentations import TimeStretch, Gain, Compose
 from typing import Tuple
 from scipy import signal
 from tqdm import tqdm
@@ -172,8 +173,38 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
     return np.array(new_audio_datas)
 
 
-def augment_data(audio_datas: np.ndarray) -> np.ndarray:
-    ...
+def augment_data(
+    audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
+) -> np.ndarray:
+    # Check n_aug is defined
+    if n_aug is None:
+        raise Exception(
+            "Please specify n_aug or how many data you want to be augmented."
+        )
+
+    augmented_datas = []
+
+    # Time stretch
+    time_stretch_augment = Compose([TimeStretch(p=1)])
+
+    # Gain
+    gain_augment = Compose([Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)])
+
+    # Time stretch + gain
+    ts_gain_augment = Compose(
+        [TimeStretch(p=1), Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)]
+    )
+
+    augment_array = [time_stretch_augment, gain_augment, ts_gain_augment]
+
+    # TODO: n_aug still not used. So the code below might be wrong.
+    print("Augmenting data...")
+    for data in tqdm(audio_datas):
+        augment_idx = random.randint(0, len(augment_array) - 1)
+        aug = augment_array[augment_idx](samples=data, sample_rate=sampling_rate)
+        augmented_datas.append(aug)
+
+    return np.array(augmented_datas)
 
 
 def extract_melspec(

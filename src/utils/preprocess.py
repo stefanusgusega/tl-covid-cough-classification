@@ -78,7 +78,7 @@ def preprocess_dataframe(
             win_length=win_length,
         )
 
-    # TO-DO: data augmenttion and MFCC
+    # TODO: data augmenttion and MFCC
 
     res = features, segmented_covid_status
 
