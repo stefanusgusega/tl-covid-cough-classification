@@ -132,13 +132,17 @@ def generate_segmented_data(
 
         # TODO: there is a problem if the segments only consisting 1 segment, because it detected as 2D array, not 1D array
         # ex: np.array([[2]]).shape --> (1, 1). but, np.array([[2], [2,1]]).shape --> (2,)
-        new_data.append(segments)
+
+        # Temporary solution: using for loop manually
+        for segment in segments:
+            new_data.append(segment)
+
+        # Append covid status data
         statuses_data.append(labels)
 
-    new_data = np.array(new_data)
     statuses_data = np.array(statuses_data)
 
-    return np.concatenate(new_data), np.concatenate(statuses_data)
+    return np.array(new_data), np.concatenate(statuses_data)
 
 
 def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
