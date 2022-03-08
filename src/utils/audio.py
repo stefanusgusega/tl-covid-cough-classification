@@ -176,6 +176,8 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
 def augment_data(
     audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
 ) -> np.ndarray:
+    # Precondition: all datas are from most discriminated data
+
     # Check n_aug is defined
     if n_aug is None:
         raise Exception(
