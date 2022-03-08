@@ -199,12 +199,20 @@ def augment_data(
 
     augment_array = [time_stretch_augment, gain_augment, ts_gain_augment]
 
-    # TODO: n_aug still not used. So the code below might be wrong.
+    # TODO: should check the truthy of this code
     print("Augmenting data...")
-    for data in tqdm(audio_datas):
-        augment_idx = random.randint(0, len(augment_array) - 1)
-        aug = augment_array[augment_idx](samples=data, sample_rate=sampling_rate)
+
+    for _ in tqdm(range(n_aug)):
+        random_audio_data = np.random.choice(audio_datas)
+        aug = np.random.choice(augment_array)(
+            samples=random_audio_data, sample_rate=sampling_rate
+        )
         augmented_datas.append(aug)
+
+    # for data in tqdm(audio_datas):
+    #     augment_idx = random.randint(0, len(augment_array) - 1)
+    #     aug = augment_array[augment_idx](samples=data, sample_rate=sampling_rate)
+    #     augmented_datas.append(aug)
 
     return np.array(augmented_datas)
 
