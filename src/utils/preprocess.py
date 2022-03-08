@@ -77,6 +77,9 @@ def preprocess_covid_dataframe(
     augmented_data = augment_data(
         covid_data_only, n_aug=n_aug, sampling_rate=sampling_rate
     )
+
+    # IMPORTANT: For testing only, so augmented_data will be pickled
+    save_obj_to_pkl(augmented_data, os.path.join(pickle_folder, "augmented_data.pkl"))
     augmented_covid_status = np.full(len(augmented_data), "COVID-19")
 
     # Append this augmented_data to actual data
@@ -89,7 +92,7 @@ def preprocess_covid_dataframe(
         print("Creating backup for balanced data...")
         save_obj_to_pkl(
             balanced_data,
-            os.path.join(pickle_folder, "padded_data.pkl"),
+            os.path.join(pickle_folder, "balanced_data.pkl"),
         )
         print("Backup for balanced data created.")
 
