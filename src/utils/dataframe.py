@@ -70,4 +70,7 @@ def get_pos_neg_diff(
     neg_label: str = "healthy",
 ):
     # get positive class and negative class difference
-    ...
+    pos_df = df[df[column_name] == pos_label]
+    neg_df = df[df[column_name] == neg_label]
+
+    return abs(neg_df - pos_df)
