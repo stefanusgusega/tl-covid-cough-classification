@@ -83,15 +83,15 @@ def preprocess_covid_dataframe(
     augmented_covid_status = np.full(len(augmented_data), "COVID-19")
 
     # Append this augmented_data to actual data
-    balanced_data = np.concatenate((covid_data_only, augmented_data)), np.concatenate(
-        (segmented_covid_statuses, augmented_covid_status)
-    )
+    balanced_data, balanced_covid_statuses = np.concatenate(
+        (covid_data_only, augmented_data)
+    ), np.concatenate((segmented_covid_statuses, augmented_covid_status))
 
     # Backup the data augmentation stage
     if backup_every_stage:
         print("Creating backup for balanced data...")
         save_obj_to_pkl(
-            balanced_data,
+            (balanced_data, balanced_covid_statuses),
             os.path.join(pickle_folder, "balanced_data.pkl"),
         )
         print("Backup for balanced data created.")
