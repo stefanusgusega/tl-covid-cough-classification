@@ -37,7 +37,7 @@ def preprocess_dataframe(
 
     if backup_every_stage:
         print("Creating backup for numpy data...")
-        save_to_pickle(
+        save_obj_to_pkl(
             (numpy_data, covid_statuses), os.path.join(pickle_folder, "numpy_data.pkl")
         )
         print("Backup for numpy data created.")
@@ -48,7 +48,7 @@ def preprocess_dataframe(
 
     if backup_every_stage:
         print("Creating backup for segmented data...")
-        save_to_pickle(
+        save_obj_to_pkl(
             (segmented_data, covid_statuses),
             os.path.join(pickle_folder, "segmented_data.pkl"),
         )
@@ -59,7 +59,7 @@ def preprocess_dataframe(
 
     if backup_every_stage:
         print("Creating backup for padded data...")
-        save_to_pickle(
+        save_obj_to_pkl(
             (padded_data, covid_statuses),
             os.path.join(pickle_folder, "padded_data.pkl"),
         )
@@ -85,7 +85,7 @@ def preprocess_dataframe(
     # Save to pickle file
     if save_to_pickle:
         print("Saving features...")
-        save_to_pickle(res, os.path.join(pickle_folder, "features.pkl"))
+        save_obj_to_pkl(res, os.path.join(pickle_folder, "features.pkl"))
         print("Features saved.")
 
     # Returning series of data in (-1, 1) shape and the labels in (-1, 1) too
@@ -93,6 +93,6 @@ def preprocess_dataframe(
     return res
 
 
-def save_to_pickle(to_save, file_path):
+def save_obj_to_pkl(to_save, file_path):
     with (open(file_path, "wb")) as f:
         pkl.dump(to_save, f)
