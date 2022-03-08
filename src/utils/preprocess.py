@@ -83,8 +83,8 @@ def preprocess_covid_dataframe(
     augmented_covid_status = np.full(len(augmented_data), "COVID-19")
 
     # Append this augmented_data to actual data
-    balanced_data = np.concatenate(covid_data_only, augmented_data), np.concatenate(
-        segmented_covid_statuses, augmented_covid_status
+    balanced_data = np.concatenate((covid_data_only, augmented_data)), np.concatenate(
+        (segmented_covid_statuses, augmented_covid_status)
     )
 
     # Backup the data augmentation stage
