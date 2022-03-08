@@ -4,14 +4,16 @@ import numpy as np
 import pandas as pd
 import pickle as pkl
 from utils.audio import (
+    augment_data,
     convert_audio_to_numpy,
     extract_melspec,
     generate_segmented_data,
     pad_audio_with_silence,
 )
+from utils.dataframe import get_pos_neg_diff
 
 
-def preprocess_dataframe(
+def preprocess_covid_dataframe(
     df: pd.DataFrame,
     audio_folder_path: str,
     sampling_rate: int = 16000,
@@ -66,7 +68,11 @@ def preprocess_dataframe(
         print("Backup for padded data created.")
 
     # Data augmentation
-    balanced_data = padded_data
+    n_aug = get_pos_neg_diff(df, "status")
+    augmented_data = augment_data(padded_data, n_aug=n_aug, sampling_rate=sampling_rate)
+
+    # TODO: should append this augmented_data to actual data
+    balanced_data = augmented_data
 
     # Feature extraction
     if is_mel_spec:
