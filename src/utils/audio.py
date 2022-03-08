@@ -129,6 +129,9 @@ def generate_segmented_data(
         segments, labels = segment_cough_and_label(
             data, status_data, sampling_rate=sampling_rate
         )
+
+        # TODO: there is a problem if the segments only consisting 1 segment, because it detected as 2D array, not 1D array
+        # ex: np.array([[2]]).shape --> (1, 1). but, np.array([[2], [2,1]]).shape --> (2,)
         new_data.append(segments)
         statuses_data.append(labels)
 
