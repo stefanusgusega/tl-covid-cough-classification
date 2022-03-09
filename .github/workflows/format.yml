@@ -24,4 +24,4 @@ jobs:
       - name: Check formatting with black
         uses: lgeiger/black-action@v1.0.1
         with:
-          args: "*.py --check"
+          args: ". --check"
