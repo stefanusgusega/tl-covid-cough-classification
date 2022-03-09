@@ -16,7 +16,9 @@ def append_format(
         found = False
         i = 0
         while not found and i < len(formats):
-            if os.path.exists(os.path.join(dataset_path, row[filename_column] + formats[i])):
+            if os.path.exists(
+                os.path.join(dataset_path, row[filename_column] + formats[i])
+            ):
                 ext = formats[i]
                 found = True
 
