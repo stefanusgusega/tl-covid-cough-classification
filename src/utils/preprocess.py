@@ -29,7 +29,9 @@ def preprocess_covid_dataframe(
     if save_to_pickle or backup_every_stage:
         # Check if the folder is specified, if not so raise an exception
         if pickle_folder is None:
-            raise Exception("Please specify the path that you wish to dump the results of this conversion.")
+            raise Exception(
+                "Please specify the path that you wish to dump the results of this conversion."
+            )
 
     numpy_data, covid_statuses = convert_audio_to_numpy(
         df, audio_folder_path=audio_folder_path, sampling_rate=sampling_rate
@@ -73,16 +75,18 @@ def preprocess_covid_dataframe(
     covid_data_only = get_covid_data_only(padded_data, segmented_covid_statuses)
 
     # Augment the positive class
-    augmented_data = augment_data(covid_data_only, n_aug=n_aug, sampling_rate=sampling_rate)
+    augmented_data = augment_data(
+        covid_data_only, n_aug=n_aug, sampling_rate=sampling_rate
+    )
 
     # IMPORTANT: For testing only, so augmented_data will be pickled
     save_obj_to_pkl(augmented_data, os.path.join(pickle_folder, "augmented_data.pkl"))
     augmented_covid_status = np.full(len(augmented_data), "COVID-19")
 
     # Append this augmented_data to actual data
-    balanced_data, balanced_covid_statuses = np.concatenate((covid_data_only, augmented_data)), np.concatenate(
-        (segmented_covid_statuses, augmented_covid_status)
-    )
+    balanced_data, balanced_covid_statuses = np.concatenate(
+        (covid_data_only, augmented_data)
+    ), np.concatenate((segmented_covid_statuses, augmented_covid_status))
 
     # Backup the data augmentation stage
     if backup_every_stage:
@@ -123,7 +127,9 @@ def save_obj_to_pkl(to_save, file_path):
         pkl.dump(to_save, f)
 
 
-def get_covid_data_only(audio_datas: np.ndarray, status_datas: np.ndarray) -> np.ndarray:
+def get_covid_data_only(
+    audio_datas: np.ndarray, status_datas: np.ndarray
+) -> np.ndarray:
     covid_only_data = []
     for audio, status in zip(audio_datas, status_datas):
         if status == "COVID-19":

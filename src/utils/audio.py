@@ -9,7 +9,9 @@ import os
 import random
 
 
-def generate_cough_segments(x, fs, cough_padding=0.1, min_cough_len=0.2, th_l_multiplier=0.1, th_h_multiplier=2):
+def generate_cough_segments(
+    x, fs, cough_padding=0.1, min_cough_len=0.2, th_l_multiplier=0.1, th_h_multiplier=2
+):
     """Preprocess the data by segmenting each file into individual coughs using a hysteresis comparator on the signal power
 
     Inputs:
@@ -87,7 +89,9 @@ def convert_audio_to_numpy(
     for _, row in tqdm(df.iterrows(), total=len(df)):
         filename = row[filename_colname] + row[ext_colname]
         # Sampling rate is not returned because it will make worse memory usage
-        audio_data, _ = librosa.load(os.path.join(audio_folder_path, filename), sr=sampling_rate)
+        audio_data, _ = librosa.load(
+            os.path.join(audio_folder_path, filename), sr=sampling_rate
+        )
         samples.append(audio_data)
         statuses.append(row[covid_status_colname])
 
@@ -119,8 +123,12 @@ def generate_segmented_data(
 
     print("Segmenting audio data...")
 
-    for data, status_data in tqdm(zip(samples_data, covid_status_data), total=len(samples_data)):
-        segments, labels = segment_cough_and_label(data, status_data, sampling_rate=sampling_rate)
+    for data, status_data in tqdm(
+        zip(samples_data, covid_status_data), total=len(samples_data)
+    ):
+        segments, labels = segment_cough_and_label(
+            data, status_data, sampling_rate=sampling_rate
+        )
 
         # TODO: there is a problem if the segments only consisting 1 segment, because it detected as 2D array, not 1D array
         # ex: np.array([[2]]).shape --> (1, 1). but, np.array([[2], [2,1]]).shape --> (2,)
@@ -171,12 +179,16 @@ def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
     return np.array(new_audio_datas)
 
 
-def augment_data(audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000) -> np.ndarray:
+def augment_data(
+    audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
+) -> np.ndarray:
     # Precondition: all datas are from most discriminated data
 
     # Check n_aug is defined
     if n_aug is None:
-        raise Exception("Please specify n_aug or how many data you want to be augmented.")
+        raise Exception(
+            "Please specify n_aug or how many data you want to be augmented."
+        )
 
     augmented_datas = []
 
@@ -187,7 +199,9 @@ def augment_data(audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
     gain_augment = Compose([Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)])
 
     # Time stretch + gain
-    ts_gain_augment = Compose([TimeStretch(p=1), Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)])
+    ts_gain_augment = Compose(
+        [TimeStretch(p=1), Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)]
+    )
 
     augment_array = [time_stretch_augment, gain_augment, ts_gain_augment]
 
@@ -196,7 +210,9 @@ def augment_data(audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
 
     for _ in tqdm(range(n_aug)):
         random_audio_data = audio_datas[np.random.choice(len(audio_datas))]
-        aug = np.random.choice(augment_array)(samples=random_audio_data, sample_rate=sampling_rate)
+        aug = np.random.choice(augment_array)(
+            samples=random_audio_data, sample_rate=sampling_rate
+        )
         augmented_datas.append(aug)
 
     return np.array(augmented_datas)
