@@ -16,8 +16,13 @@ class ResNet50Model(BaseModel):
         include_resnet_top: bool = False,
         initial_weights=None,
     ) -> None:
+        # Override the BaseModel constructor
+        super(ResNet50Model, self).__init__(
+            input_shape=input_shape, initial_weights=initial_weights
+        )
+
+        # Construct
         self.include_resnet_top = include_resnet_top
-        self.initial_weights = initial_weights
 
     def build_model(self):
         self.model = Sequential()
