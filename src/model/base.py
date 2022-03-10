@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Tuple
 
 
@@ -6,9 +7,11 @@ class BaseModel:
         # Check whether the input shape of the model 2D
         if len(input_shape) != 2:
             raise Exception(f"The input shape should be 2D. Current : {input_shape}D.")
+
         self.input_shape = input_shape
         self.initial_weights = initial_weights
 
+    @abstractmethod
     def fit(self, datas, labels):
         ...
 
