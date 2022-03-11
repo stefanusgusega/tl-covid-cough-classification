@@ -21,7 +21,7 @@ class Trainer:
         print("Splitting dataset to ready to train and test...")
         # Split here in stratified fashion
         self.X, self.X_test, self.y, self.y_test = train_test_split(
-            self.X_full, self.y_full, test_size=test_size, stratify=self.y
+            self.X_full, self.y_full, test_size=test_size, stratify=self.y_full
         )
         print("Dataset splitted.")
 
