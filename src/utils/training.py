@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 
+from model.resnet50 import ResNet50Model
+
 
 class Trainer:
     def __init__(
@@ -23,13 +25,29 @@ class Trainer:
         )
         print("Dataset splitted.")
 
+        # Init array to save metrics
+        self.metrics_arr = []
+
     def stratified_k_fold_cross_validation(self, n_splits: int = 5):
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
         for idx, (train_index, val_index) in enumerate(skf.split(self.X, self.y)):
-            ...
             # TODO: do training
             # 80 : 20 --> 80 will be stratified 5 fold cross validated
 
             # X_train, X_test = audio_datas[train_index], audio_datas[test_index]
             # y_train, y_test = audio_labels[train_index], audio_labels[test_index]
+            X_train, X_val = self.X[train_index], self.X[val_index]
+            y_train, y_val = self.y[train_index], self.y[val_index]
+
+            # Get dimension of each audio data (mel spectrogram)
+            input_shape = X_train.shape[1:]
+
+            model = ResNet50Model(input_shape=input_shape)
+            model.build_model()
+            model.print_summary()
+            history = model.fit(
+                datas=X_train, labels=y_train, validation_datas=(X_val, y_val)
+            )
+
+            self.metrics_arr.append(history)
