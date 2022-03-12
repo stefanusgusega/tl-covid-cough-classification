@@ -12,10 +12,15 @@ class BaseModel:
 
         self.input_shape = input_shape
         self.initial_weights = initial_weights
+        self.model = None
 
     @abstractmethod
     def fit(self, datas, labels):
         ...
+
+    def evaluate(self, datas, labels):
+        scores = self.model.evaluate(datas, labels)
+        return scores
 
     def print_summary(self):
         self.model.summary()

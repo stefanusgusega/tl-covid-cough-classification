@@ -7,6 +7,7 @@ from model.base import BaseModel
 import numpy as np
 
 tf.random.set_seed(42)
+np.random.seed(42)
 
 
 class ResNet50Model(BaseModel):

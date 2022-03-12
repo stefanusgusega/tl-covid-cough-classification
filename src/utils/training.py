@@ -55,7 +55,8 @@ class Trainer:
             model = ResNet50Model(input_shape=input_shape)
             model.build_model()
 
-            history = model.fit(
+            print(f"Training for fold {idx}...")
+            model.fit(
                 datas=X_train,
                 labels=y_train,
                 validation_datas=(X_val, y_val),
@@ -63,7 +64,21 @@ class Trainer:
                 batch_size=batch_size,
             )
 
-            self.metrics_arr.append(history)
+            _, metric = model.evaluate(X_val, y_val)
+
+            self.metrics_arr.append(metric)
+
+        # self.X = self.expand_mel_spec(self.X)
+        # model = ResNet50Model(input_shape = self.X.shape[1:])
+        # model.build_model()
+
+        # fit_params = {
+        #     'epochs': epochs,
+        #     'batch_size': batch_size,
+        #     'validation_datas': ()
+        # }
+
+        # self.metrics_arr = cross_val_score(estimator=model, X=self.X, y=self.y, )
 
     def expand_mel_spec(self, audio_datas: np.ndarray):
         new_mel_specs = []
