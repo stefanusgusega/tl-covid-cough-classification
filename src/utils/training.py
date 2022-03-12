@@ -35,12 +35,12 @@ class Trainer:
         # Init array to save metrics
         self.metrics_arr = []
 
+        # Init model attribute
+        self.model = None
+
     def stratified_k_fold_cross_validation(
         self, n_splits: int = 5, epochs: int = 100, batch_size: int = None
     ):
-        # Reset the counter of the global random seed
-        # tf.random.set_seed(42)
-
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
         for idx, (train_index, val_index) in enumerate(skf.split(self.X, self.y)):
@@ -59,11 +59,11 @@ class Trainer:
 
             input_shape = X_train.shape[1:]
 
-            model = ResNet50Model(input_shape=input_shape)
-            model.build_model()
+            self.model = ResNet50Model(input_shape=input_shape)
+            self.model.build_model()
 
             print(f"Training for fold {idx+1}...")
-            model.fit(
+            self.model.fit(
                 datas=X_train,
                 labels=y_train,
                 validation_datas=(X_val, y_val),
@@ -71,7 +71,7 @@ class Trainer:
                 batch_size=batch_size,
             )
 
-            _, metric = model.evaluate(X_val, y_val)
+            _, metric = self.model.evaluate(X_val, y_val)
 
             self.metrics_arr.append(metric)
 
