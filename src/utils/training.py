@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import OrdinalEncoder
-
+import tensorflow as tf
 from model.resnet50 import ResNet50Model
 
 
@@ -41,7 +41,11 @@ class Trainer:
             y_train, y_val = self.y[train_index], self.y[val_index]
 
             # Get dimension of each audio data (mel spectrogram)
-            input_shape = X_train.shape[1:]
+            # TODO : ResNet50 expects the input_shape to be 3D
+            X_train = self.expand_mel_spec(X_train)
+            X_val = self.expand_mel_spec(X_val)
+
+            input_shape = X_train[1:]
 
             model = ResNet50Model(input_shape=input_shape)
             model.build_model()
@@ -51,3 +55,12 @@ class Trainer:
             )
 
             self.metrics_arr.append(history)
+
+    def expand_mel_spec(self, audio_datas: np.ndarray):
+        new_mel_specs = []
+
+        for mel_spec in audio_datas:
+            new_mel_spec = tf.expand_dims(mel_spec, -1)
+            new_mel_specs.append(new_mel_spec)
+
+        return np.array(new_mel_specs)
