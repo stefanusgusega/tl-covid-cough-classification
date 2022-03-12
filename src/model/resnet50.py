@@ -47,7 +47,6 @@ class ResNet50Model(BaseModel):
             metrics=metrics,
         )
 
-    @tf.function
     def fit(
         self,
         datas: np.ndarray,
@@ -56,6 +55,8 @@ class ResNet50Model(BaseModel):
         epochs: int = 100,
         batch_size: int = None,
     ):
+        # Reset the sequence of the randomness of tf
+        tf.random.set_seed(42)
         return self.model.fit(
             x=datas,
             y=labels,
