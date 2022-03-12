@@ -28,15 +28,17 @@ class ResNet50Model(BaseModel):
         # TODO : consider to take this function to constructor instead
         self.model = Sequential()
 
-        resnet50 = ResNet50(
-            include_top=self.include_resnet_top,
-            weights=self.initial_weights,
-            input_shape=self.input_shape,
+        self.model.add(
+            ResNet50(
+                include_top=self.include_resnet_top,
+                weights=self.initial_weights,
+                input_shape=self.input_shape,
+            )
         )
-        resnet50_out = resnet50.output
-        resnet50_out = keras.layers.Flatten()(resnet50_out)
 
-        self.model.add(resnet50_out)
+        self.model.add(keras.layers.Flatten())
+        self.model.add(keras.layers.Dense(8, activation="relu"))
+        self.model.add(keras.layers.Dense(2, activation="softmax"))
 
         self.model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
