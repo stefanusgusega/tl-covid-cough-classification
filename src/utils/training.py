@@ -35,12 +35,10 @@ class Trainer:
         # Init array to save metrics
         self.metrics_arr = []
 
+    @tf.function
     def stratified_k_fold_cross_validation(
         self, n_splits: int = 5, epochs: int = 100, batch_size: int = None
     ):
-        # Set random seed
-        tf.random.set_seed(42)
-
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
         for idx, (train_index, val_index) in enumerate(skf.split(self.X, self.y)):
