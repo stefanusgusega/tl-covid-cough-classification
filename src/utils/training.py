@@ -3,6 +3,10 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import OrdinalEncoder
 from model.resnet50 import ResNet50Model
+import tensorflow as tf
+
+tf.random.set_seed(42)
+np.random.seed(42)
 
 
 class Trainer:
@@ -27,7 +31,9 @@ class Trainer:
         # Init array to save metrics
         self.metrics_arr = []
 
-    def stratified_k_fold_cross_validation(self, n_splits: int = 5):
+    def stratified_k_fold_cross_validation(
+        self, n_splits: int = 5, epochs: int = 100, batch_size: int = None
+    ):
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
         for idx, (train_index, val_index) in enumerate(skf.split(self.X, self.y)):
@@ -48,9 +54,13 @@ class Trainer:
 
             model = ResNet50Model(input_shape=input_shape)
             model.build_model()
-            model.print_summary()
+
             history = model.fit(
-                datas=X_train, labels=y_train, validation_datas=(X_val, y_val)
+                datas=X_train,
+                labels=y_train,
+                validation_datas=(X_val, y_val),
+                epochs=epochs,
+                batch_size=batch_size,
             )
 
             self.metrics_arr.append(history)
