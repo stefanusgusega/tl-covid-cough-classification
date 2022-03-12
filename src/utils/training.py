@@ -2,7 +2,6 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import OrdinalEncoder
-import tensorflow as tf
 from model.resnet50 import ResNet50Model
 
 
@@ -60,7 +59,7 @@ class Trainer:
         new_mel_specs = []
 
         for mel_spec in audio_datas:
-            new_mel_spec = tf.expand_dims(mel_spec, -1)
+            new_mel_spec = np.expand_dims(mel_spec, -1)
             new_mel_specs.append(new_mel_spec)
 
         return np.array(new_mel_specs)
