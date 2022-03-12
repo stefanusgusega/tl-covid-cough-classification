@@ -47,6 +47,7 @@ class ResNet50Model(BaseModel):
             metrics=metrics,
         )
 
+    @tf.function
     def fit(
         self,
         datas: np.ndarray,
