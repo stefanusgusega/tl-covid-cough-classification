@@ -39,7 +39,7 @@ class Trainer:
         self, n_splits: int = 5, epochs: int = 100, batch_size: int = None
     ):
         # Reset the counter of the global random seed
-        tf.random.set_seed(42)
+        # tf.random.set_seed(42)
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
