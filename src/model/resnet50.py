@@ -46,5 +46,18 @@ class ResNet50Model(BaseModel):
             metrics=metrics,
         )
 
-    def fit(self, datas: np.ndarray, labels: np.ndarray, validation_datas: Tuple):
-        return self.model.fit(datas, labels, validation_data=validation_datas)
+    def fit(
+        self,
+        datas: np.ndarray,
+        labels: np.ndarray,
+        validation_datas: Tuple,
+        epochs: int = 100,
+        batch_size: int = None,
+    ):
+        return self.model.fit(
+            x=datas,
+            y=labels,
+            validation_data=validation_datas,
+            epochs=epochs,
+            batch_size=batch_size,
+        )
