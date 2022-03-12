@@ -44,7 +44,7 @@ class Trainer:
             X_train = self.expand_mel_spec(X_train)
             X_val = self.expand_mel_spec(X_val)
 
-            input_shape = X_train[1:]
+            input_shape = X_train.shape[1:]
 
             model = ResNet50Model(input_shape=input_shape)
             model.build_model()
