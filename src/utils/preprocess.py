@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pickle as pkl
+from sklearn.preprocessing import LabelBinarizer
 from utils.audio import (
     augment_data,
     convert_audio_to_numpy,
@@ -109,8 +110,9 @@ def preprocess_covid_dataframe(
 
     # TODO: MFCC
 
-    # NOW : returning features in 2D shape and status in 1D shape
-    res = features, balanced_covid_statuses.reshape(-1, 1)
+    # NOW : returning features in 2D shape and status in 2D shape with one hot encoding fashion
+    unencoded_labels = balanced_covid_statuses.reshape(-1, 1)
+    res = features, encode_label(labels=unencoded_labels, pos_label="COVID-19")
 
     # Save to pickle file for the final features
     if save_to_pickle:
@@ -136,3 +138,24 @@ def get_covid_data_only(
             covid_only_data.append(audio)
 
     return np.array(covid_only_data)
+
+
+def expand_mel_spec(old_mel_specs: np.ndarray):
+    new_mel_specs = []
+
+    for mel_spec in old_mel_specs:
+        new_mel_spec = np.expand_dims(mel_spec, -1)
+        new_mel_specs.append(new_mel_spec)
+
+    return np.array(new_mel_specs)
+
+
+def encode_label(labels: np.ndarray, pos_label: str = None):
+    # If binary, just encode it according to positive label and negative label
+    if len(np.unique()) != 2:
+        if pos_label is None:
+            raise Exception("Please specify which is the positive label")
+        return np.where(labels == pos_label, 1, 0).reshape(-1, 1)
+
+    # If not, then apply label binarizer
+    return LabelBinarizer.fit_transform(labels)

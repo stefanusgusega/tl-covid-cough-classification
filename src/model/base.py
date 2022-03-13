@@ -13,6 +13,11 @@ class BaseModel:
         self.input_shape = input_shape
         self.initial_weights = initial_weights
         self.model = None
+        self.model_type = "base"
+
+    @abstractmethod
+    def build_model(self):
+        ...
 
     @abstractmethod
     def fit(self, datas, labels):

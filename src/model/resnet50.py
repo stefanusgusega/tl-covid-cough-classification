@@ -24,6 +24,7 @@ class ResNet50Model(BaseModel):
 
         # Construct
         self.include_resnet_top = include_resnet_top
+        self.model_type = "resnet50"
 
     def build_model(self, metrics=[tf.keras.metrics.AUC()]):
         # TODO : consider to take this function to constructor instead
@@ -38,8 +39,9 @@ class ResNet50Model(BaseModel):
         )
 
         self.model.add(keras.layers.Flatten())
-        self.model.add(keras.layers.Dense(8, activation="relu"))
-        self.model.add(keras.layers.Dense(1, activation="sigmoid"))
+        self.model.add(keras.layers.Dense(512, activation="relu"))
+        self.model.add(keras.layers.Dense(32, activation="relu"))
+        self.model.add(keras.layers.Dense(2, activation="softmax"))
 
         self.model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
