@@ -38,6 +38,7 @@ class ResNet50Model(BaseModel):
             )
         )
 
+        self.model.add(keras.layers.AveragePooling2D())
         self.model.add(keras.layers.Flatten())
         self.model.add(keras.layers.Dense(512, activation="relu"))
         self.model.add(keras.layers.Dense(32, activation="relu"))
