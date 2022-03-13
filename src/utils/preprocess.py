@@ -152,7 +152,7 @@ def expand_mel_spec(old_mel_specs: np.ndarray):
 
 def encode_label(labels: np.ndarray, pos_label: str = None):
     # If binary, just encode it according to positive label and negative label
-    if len(np.unique()) != 2:
+    if len(np.unique(labels)) != 2:
         if pos_label is None:
             raise Exception("Please specify which is the positive label")
         return np.where(labels == pos_label, 1, 0).reshape(-1, 1)
