@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from model.base import BaseModel
-from utils.preprocess import expand_mel_spec
+from utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
 
 tf.random.set_seed(42)
@@ -67,6 +67,10 @@ class Trainer:
                 # TODO: Should check whether using mel spec or mfcc
                 X_train = expand_mel_spec(X_train)
                 X_val = expand_mel_spec(X_val)
+
+            # Apply one hot encoding
+            y_train = encode_label(y_train, "COVID-19")
+            y_val = encode_label(y_val, "COVID-19")
 
             print(f"Training for fold {idx+1}/{n_splits}...")
             self.model.fit(

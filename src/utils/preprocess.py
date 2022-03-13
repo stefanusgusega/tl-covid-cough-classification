@@ -111,7 +111,7 @@ def preprocess_covid_dataframe(
     # TODO: MFCC
 
     # NOW : returning features in 2D shape and status in 2D shape with one hot encoding fashion
-    res = features, encode_label(labels=balanced_covid_statuses, pos_label="COVID-19")
+    res = features, balanced_covid_statuses.reshape(-1, 1)
 
     # Save to pickle file for the final features
     if save_to_pickle:
