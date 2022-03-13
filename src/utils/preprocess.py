@@ -3,7 +3,6 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pickle as pkl
-from sklearn.preprocessing import LabelBinarizer
 from utils.audio import (
     augment_data,
     convert_audio_to_numpy,
@@ -11,7 +10,7 @@ from utils.audio import (
     generate_segmented_data,
     pad_audio_with_silence,
 )
-from utils.dataframe import get_pos_neg_diff
+from keras.utils.np_utils import to_categorical
 
 
 def preprocess_covid_dataframe(
@@ -70,7 +69,8 @@ def preprocess_covid_dataframe(
         print("Backup for padded data created.")
 
     # Data augmentation
-    n_aug = get_pos_neg_diff(df, "status")
+    # NOW : labels should be contains only 2 labels
+    n_aug = get_pos_neg_diff(segmented_covid_statuses)
 
     # Data being augmented should contain only COVID-19 audio data
     covid_data_only = get_covid_data_only(padded_data, segmented_covid_statuses)
@@ -111,8 +111,7 @@ def preprocess_covid_dataframe(
     # TODO: MFCC
 
     # NOW : returning features in 2D shape and status in 2D shape with one hot encoding fashion
-    unencoded_labels = balanced_covid_statuses.reshape(-1, 1)
-    res = features, encode_label(labels=unencoded_labels, pos_label="COVID-19")
+    res = features, encode_label(labels=balanced_covid_statuses, pos_label="COVID-19")
 
     # Save to pickle file for the final features
     if save_to_pickle:
@@ -140,6 +139,13 @@ def get_covid_data_only(
     return np.array(covid_only_data)
 
 
+def get_pos_neg_diff(status_datas: np.ndarray):
+    # precondition : status datas should be binary
+    _, unique_counts = np.unique(status_datas, return_counts=True)
+
+    return abs(np.diff(unique_counts))[0]
+
+
 def expand_mel_spec(old_mel_specs: np.ndarray):
     new_mel_specs = []
 
@@ -151,11 +157,10 @@ def expand_mel_spec(old_mel_specs: np.ndarray):
 
 
 def encode_label(labels: np.ndarray, pos_label: str = None):
-    # If binary, just encode it according to positive label and negative label
+    # If binary, encode it according to positive label and negative label first
     if len(np.unique(labels)) == 2:
         if pos_label is None:
             raise Exception("Please specify which is the positive label")
-        return np.where(labels == pos_label, 1, 0).reshape(-1, 1)
+        labels = np.where(labels == pos_label, 1, 0).reshape(-1, 1)
 
-    # If not, then apply label binarizer
-    return LabelBinarizer.fit_transform(labels)
+    return to_categorical(labels)
