@@ -60,16 +60,3 @@ def filter_covid(
         raise Exception(f"No label named '{neg_label}'")
 
     return df[(df[column_name] == pos_label) | (df[column_name] == neg_label)]
-
-
-def get_pos_neg_diff(
-    df: pd.DataFrame,
-    column_name: str,
-    pos_label: str = "COVID-19",
-    neg_label: str = "healthy",
-):
-    # get positive class and negative class difference
-    pos_df = df[df[column_name] == pos_label]
-    neg_df = df[df[column_name] == neg_label]
-
-    return abs(len(neg_df) - len(pos_df))
