@@ -45,6 +45,9 @@ class Trainer:
         self.metrics_arr = []
         self.losses_arr = []
 
+        # Init callbacks array
+        self.callbacks_arr = []
+
         # Init model attribute
         self.model = model
 
@@ -85,3 +88,11 @@ class Trainer:
 
             self.metrics_arr.append(metric)
             self.losses_arr.append(loss)
+
+    def set_checkpoint_callback(self, checkpoint_path: str, save_weights_only=True):
+        # Append checkpoint callback
+        self.callbacks_arr.append(
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath=checkpoint_path, save_weights_only=save_weights_only
+            )
+        )
