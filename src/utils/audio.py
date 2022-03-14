@@ -241,7 +241,7 @@ def extract_melspec(
             window=signal.windows.hamming,
         )
 
-        # Change to decibels instead of amplitude
+        # Change to decibels instead of power spectrogram
         log_mel_spec = librosa.power_to_db(mel_spec)
 
         mel_specs.append(log_mel_spec)
