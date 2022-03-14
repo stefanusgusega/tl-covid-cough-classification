@@ -1,4 +1,3 @@
-# TODO: implement sttratified k-fold validation
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from model.base import BaseModel
@@ -18,17 +17,16 @@ class Trainer:
         test_size: float = 0.8,
     ) -> None:
 
+        # TODO : the model resets its randomness when construct.
+        # So it needs to make a new model whenever starts to train
+        # Idea : init model only with string, then build a model based on the name
+        # The param of the model passed on constructor
+        # Need a method to build new model
         if model.model_type == "base":
             raise Exception("The model cannot be a base model.")
 
         self.X_full = audio_datas
-
-        # print("Encoding labels...")
-        # Label encode the audio labels first
-        # label_encoder = OrdinalEncoder(categories=[["healthy", "COVID-19"]])
         self.y_full = audio_labels
-        # self.y_full = label_encoder.fit_transform(audio_labels)
-        # print("Labels encoded.")
 
         print("Splitting dataset to ready to train and test...")
         # Split here in stratified fashion
@@ -82,6 +80,7 @@ class Trainer:
                 validation_datas=(X_val, y_val),
                 epochs=epochs,
                 batch_size=batch_size,
+                callbacks=self.callbacks_arr,
             )
 
             loss, metric = self.model.evaluate(X_val, y_val)

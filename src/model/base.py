@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Tuple
 
+from utils.random import set_random_seed
+
 
 class BaseModel:
     def __init__(self, input_shape: Tuple, initial_weights=None) -> None:
@@ -14,6 +16,9 @@ class BaseModel:
         self.initial_weights = initial_weights
         self.model = None
         self.model_type = "base"
+
+        # Reset the randomness
+        set_random_seed(42)
 
     @abstractmethod
     def build_model(self):

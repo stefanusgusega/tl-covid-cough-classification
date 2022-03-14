@@ -60,13 +60,13 @@ class ResNet50Model(BaseModel):
         validation_datas: Tuple,
         epochs: int = 100,
         batch_size: int = None,
+        callbacks: list = None,
     ):
-        # Reset the sequence of the randomness of tf
-        tf.random.set_seed(42)
         return self.model.fit(
             x=datas,
             y=labels,
             validation_data=validation_datas,
             epochs=epochs,
             batch_size=batch_size,
+            callbacks=callbacks,
         )
