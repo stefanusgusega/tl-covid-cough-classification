@@ -1,11 +1,10 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
-from model.base import BaseModel
+from model.resnet50 import ResNet50Model
 from utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
 
-tf.random.set_seed(42)
-np.random.seed(42)
+AVAILABLE_MODELS = ["resnet50"]
 
 
 class Trainer:
@@ -13,7 +12,8 @@ class Trainer:
         self,
         audio_datas: np.ndarray,
         audio_labels: np.ndarray,
-        model: BaseModel,
+        model_type: str = "resnet50",
+        model_args: dict = None,
         test_size: float = 0.8,
     ) -> None:
 
@@ -22,8 +22,12 @@ class Trainer:
         # Idea : init model only with string, then build a model based on the name
         # The param of the model passed on constructor
         # Need a method to build new model
-        if model.model_type == "base":
-            raise Exception("The model cannot be a base model.")
+
+        # If not one of available models, throw an exception
+        if model_type not in AVAILABLE_MODELS:
+            raise Exception(
+                f"The model type should be one of these: {', '.join(AVAILABLE_MODELS)}. Found: {model_type}"
+            )
 
         self.X_full = audio_datas
         self.y_full = audio_labels
@@ -46,11 +50,8 @@ class Trainer:
         # Init callbacks array
         self.callbacks_arr = []
 
-        # Init model attribute
-        self.model = model
-
-        # Build model
-        self.model.build_model()
+        self.model_type = model_type
+        self.model_args = model_args
 
     def stratified_k_fold_cross_validation(
         self, n_splits: int = 5, epochs: int = 100, batch_size: int = None
@@ -64,7 +65,7 @@ class Trainer:
 
             # If the model is a resnet-50, the input should be expanded
             # Because ResNet expects a 3D shape
-            if self.model.model_type == "resnet50":
+            if self.model_type == "resnet50":
                 # TODO: Should check whether using mel spec or mfcc
                 X_train = expand_mel_spec(X_train)
                 X_val = expand_mel_spec(X_val)
@@ -73,8 +74,10 @@ class Trainer:
             y_train = encode_label(y_train, "COVID-19")
             y_val = encode_label(y_val, "COVID-19")
 
+            model = self.generate_model()
+
             print(f"Training for fold {idx+1}/{n_splits}...")
-            self.model.fit(
+            model.fit(
                 datas=X_train,
                 labels=y_train,
                 validation_datas=(X_val, y_val),
@@ -83,10 +86,14 @@ class Trainer:
                 callbacks=self.callbacks_arr,
             )
 
-            loss, metric = self.model.evaluate(X_val, y_val)
+            loss, metric = model.evaluate(X_val, y_val)
 
             self.metrics_arr.append(metric)
             self.losses_arr.append(loss)
+
+    def generate_model(self):
+        if self.model_type == "resnet50":
+            return ResNet50Model(**self.model_args)
 
     def set_checkpoint_callback(self, checkpoint_path: str, save_weights_only=True):
         # Append checkpoint callback
