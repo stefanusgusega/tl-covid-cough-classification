@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
+from model.base import BaseModel
 from model.resnet50 import ResNet50Model
 from utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
@@ -91,9 +92,11 @@ class Trainer:
             self.metrics_arr.append(metric)
             self.losses_arr.append(loss)
 
-    def generate_model(self):
+    def generate_model(self) -> BaseModel:
         if self.model_type == "resnet50":
-            return ResNet50Model(**self.model_args)
+            model = ResNet50Model(**self.model_args)
+
+        return model.build_model()
 
     def set_checkpoint_callback(self, checkpoint_path: str, save_weights_only=True):
         # Append checkpoint callback
