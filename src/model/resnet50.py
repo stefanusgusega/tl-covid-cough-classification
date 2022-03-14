@@ -1,8 +1,5 @@
 from typing import Tuple
 import tensorflow as tf
-from keras.applications.resnet import ResNet50
-from keras.models import Sequential
-import keras
 from model.base import BaseModel
 import numpy as np
 
@@ -28,27 +25,33 @@ class ResNet50Model(BaseModel):
 
     def build_model(self, metrics=[tf.keras.metrics.AUC()]):
         # TODO : consider to take this function to constructor instead
-        self.model = Sequential()
+        self.model = tf.keras.Sequential()
 
+        # ResNet block
         self.model.add(
-            ResNet50(
+            tf.keras.applications.resnet50.ResNet50(
                 include_top=self.include_resnet_top,
                 weights=self.initial_weights,
                 input_shape=self.input_shape,
             )
         )
 
-        self.model.add(keras.layers.AveragePooling2D())
-        self.model.add(keras.layers.Flatten())
-        self.model.add(keras.layers.Dense(512, activation="relu"))
-        self.model.add(keras.layers.Dense(32, activation="relu"))
-        self.model.add(keras.layers.Dense(2, activation="softmax"))
+        # The top layer of ResNet
+        self.model.add(tf.keras.layers.AveragePooling2D())
+        self.model.add(tf.keras.layers.Flatten())
+
+        # The fully connected layers
+        self.model.add(tf.keras.layers.Dense(512, activation="relu"))
+        self.model.add(tf.keras.layers.Dense(32, activation="relu"))
+        self.model.add(tf.keras.layers.Dense(2, activation="softmax"))
 
         self.model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
             loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=metrics,
         )
+
+        return self.model
 
     def fit(
         self,
