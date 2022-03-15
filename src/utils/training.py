@@ -4,6 +4,8 @@ from model.resnet50 import ResNet50Model
 from utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
 
+# import keras_tuner as kt
+
 AVAILABLE_MODELS = ["resnet50"]
 
 
@@ -16,13 +18,6 @@ class Trainer:
         model_args: dict = None,
         test_size: float = 0.8,
     ) -> None:
-
-        # TODO : the model resets its randomness when construct.
-        # So it needs to make a new model whenever starts to train
-        # Idea : init model only with string, then build a model based on the name
-        # The param of the model passed on constructor
-        # Need a method to build new model
-
         # If not one of available models, throw an exception
         if model_type not in AVAILABLE_MODELS:
             raise Exception(
@@ -105,3 +100,9 @@ class Trainer:
                 filepath=checkpoint_path, save_weights_only=save_weights_only
             )
         )
+
+    def set_early_stopping_callback(self):
+        self.callbacks_arr.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss"))
+
+    def hyperparameter_tune(self):
+        ...
