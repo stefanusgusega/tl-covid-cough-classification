@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
-from model.base import BaseModel
 from model.resnet50 import ResNet50Model
 from utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
@@ -79,9 +78,9 @@ class Trainer:
 
             print(f"Training for fold {idx+1}/{n_splits}...")
             model.fit(
-                datas=X_train,
-                labels=y_train,
-                validation_datas=(X_val, y_val),
+                x=X_train,
+                y=y_train,
+                validation_data=(X_val, y_val),
                 epochs=epochs,
                 batch_size=batch_size,
                 callbacks=self.callbacks_arr,
@@ -92,7 +91,7 @@ class Trainer:
             self.metrics_arr.append(metric)
             self.losses_arr.append(loss)
 
-    def generate_model(self) -> BaseModel:
+    def generate_model(self) -> tf.keras.Sequential:
         if self.model_type == "resnet50":
             model = ResNet50Model(**self.model_args)
 
