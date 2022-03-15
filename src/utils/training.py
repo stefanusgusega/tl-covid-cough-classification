@@ -86,6 +86,7 @@ class Trainer:
                 callbacks=self.callbacks_arr,
             )
 
+            print(f"Evaluating model fold {idx + 1}/{n_splits}...")
             loss, metric = model.evaluate(X_val, y_val)
 
             self.metrics_arr.append(metric)

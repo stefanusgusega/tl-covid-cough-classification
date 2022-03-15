@@ -52,21 +52,3 @@ class ResNet50Model(BaseModel):
         )
 
         return self.model
-
-    def fit(
-        self,
-        datas: np.ndarray,
-        labels: np.ndarray,
-        validation_datas: Tuple,
-        epochs: int = 100,
-        batch_size: int = None,
-        callbacks: list = None,
-    ):
-        return self.model.fit(
-            x=datas,
-            y=labels,
-            validation_data=validation_datas,
-            epochs=epochs,
-            batch_size=batch_size,
-            callbacks=callbacks,
-        )

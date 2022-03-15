@@ -24,13 +24,5 @@ class BaseModel:
     def build_model(self):
         ...
 
-    @abstractmethod
-    def fit(self, datas, labels):
-        ...
-
-    def evaluate(self, datas, labels):
-        scores = self.model.evaluate(datas, labels)
-        return scores
-
     def print_summary(self):
         self.model.summary()
