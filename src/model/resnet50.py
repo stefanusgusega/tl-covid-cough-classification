@@ -20,7 +20,6 @@ class ResNet50Model(BaseModel):
         self.model_type = "resnet50"
 
     def build_model(self, metrics=[tf.keras.metrics.AUC()]):
-        # TODO : consider to take this function to constructor instead
         self.model = tf.keras.Sequential()
 
         # ResNet block
