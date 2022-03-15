@@ -5,6 +5,9 @@ import tensorflow as tf
 
 
 def set_random_seed(seed_value: int = 42):
+    # Configures TensorFlow ops to run deterministically
+    tf.config.experimental.enable_op_determinism()
+
     # Set the PYTHONHASHSEED environment variable at a fixed value
     os.environ["PYTHONHASHSEED"] = str(seed_value)
 

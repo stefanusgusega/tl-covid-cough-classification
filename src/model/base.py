@@ -18,7 +18,7 @@ class BaseModel:
         self.model_type = "base"
 
         # Reset the randomness
-        set_random_seed(42)
+        set_random_seed()
 
     @abstractmethod
     def build_model(self):
