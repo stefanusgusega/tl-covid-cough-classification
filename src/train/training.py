@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from src.model import ResNet50Model
@@ -5,7 +6,7 @@ from src.utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
 from src.utils.model import hyperparameter_tune_resnet_model
-
+import pickle as pkl
 
 AVAILABLE_MODELS = ["resnet50"]
 
@@ -55,7 +56,13 @@ class Trainer:
 
         self.hyperparameter_tuning_args = hyperparameter_tuning_args
 
-    def train(self, n_splits: int = 5, epochs: int = 100, batch_size: int = None):
+    def train(
+        self,
+        hp_model_tuning_folder: str,
+        n_splits: int = 5,
+        epochs: int = 100,
+        batch_size: int = None,
+    ):
         # The outer is to split between data and test
         outer_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
@@ -89,11 +96,15 @@ class Trainer:
             else:
                 model = self.hyperparameter_tune(X_folds, y_folds)
 
+            # Save the optimized model
+            self.save_optimum_hyperparameter_model(hp_model_tuning_folder)
+
             # Training for this fold
             # TODO : Use the optimum hyperparamter to train.
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
+
             model.fit(
-                x=X_folds,
+                X=X_folds,
                 y=y_folds,
                 validation_data=(X_test, y_test),
                 epochs=epochs,
@@ -202,3 +213,12 @@ class Trainer:
         grid_result = grid.fit(datas, labels)
 
         return grid_result.best_estimator_
+
+    def save_optimum_hyperparameter_model(self, folder: str):
+        if self.hyperparameter_tuning_args is not None:
+            print("Saving the optimum hyperparameter model...")
+            with (open(os.path.join(folder, "optimum_hp.pkl"), "wb") as f):
+                pkl.dump(f)
+            print(
+                f"Optimum hyperparameter model saved at {os.path.join(folder, 'optimum_hp.pkl')}."
+            )
