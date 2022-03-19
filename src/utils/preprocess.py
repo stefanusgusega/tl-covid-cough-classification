@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pickle as pkl
-from utils.audio import (
+from src.utils.audio import (
     augment_data,
     convert_audio_to_numpy,
     extract_melspec,
