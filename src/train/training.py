@@ -1,10 +1,10 @@
 import numpy as np
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
-from model.base import BaseModel
-from model.resnet50 import ResNet50Model
-from utils.preprocess import encode_label, expand_mel_spec
+from src.model import ResNet50Model
+from src.utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
+from src.utils.model import hyperparameter_tune_model
 
 
 AVAILABLE_MODELS = ["resnet50"]
@@ -158,7 +158,7 @@ class Trainer:
             self.metrics_arr.append(metric)
             self.losses_arr.append(loss)
 
-    def generate_model(self) -> BaseModel:
+    def generate_model(self):
         if self.model_type == "resnet50":
             model = ResNet50Model(**self.model_args)
 
@@ -177,7 +177,7 @@ class Trainer:
 
     def hyperparameter_tune(
         self, datas: np.ndarray, labels: np.ndarray, n_splits: int = 5
-    ) -> BaseModel:
+    ):
         """
         This is the located in deepest loop of nested cross validation.
         Should return the best model.
@@ -185,11 +185,12 @@ class Trainer:
         initial_model = self.generate_model()
 
         model = KerasClassifier(
-            model=initial_model.hyperparameter_tune_model,
+            model=hyperparameter_tune_model,
             verbose=0,
             first_dense_units=[],
             second_dense_units=[],
             learning_rate=[],
+            initial_model=initial_model,
             random_state=42,
         )
 
