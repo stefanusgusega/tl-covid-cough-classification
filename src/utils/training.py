@@ -87,7 +87,7 @@ class Trainer:
                 model = self.generate_model().build_model()
             # Else, hyperparameter tune it
             else:
-                model = self.hyperparameter_tune()
+                model = self.hyperparameter_tune(X_folds, y_folds)
 
             # Training for this fold
             # TODO : Use the optimum hyperparamter to train.
