@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Tuple
 from utils.random import set_random_seed
+import tensorflow as tf
 
 
 class BaseModel:
@@ -27,5 +28,5 @@ class BaseModel:
         self.model.summary()
 
     @abstractmethod
-    def hyperparameter_tune_model(self):
+    def hyperparameter_tune_model(self) -> tf.keras.Model:
         set_random_seed()
