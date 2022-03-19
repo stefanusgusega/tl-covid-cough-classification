@@ -62,7 +62,7 @@ class ResNet50Model(BaseModel):
 
     def hyperparameter_tune_model(
         self, first_dense_units, second_dense_units, learning_rate
-    ):
+    ) -> tf.keras.Model:
         """
         Hyperparameters should contain these:
         * first_dense_units
