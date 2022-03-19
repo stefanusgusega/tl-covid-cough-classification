@@ -85,6 +85,9 @@ class Trainer:
             # If not intended to do tuning, then directly generate model and build
             if self.hyperparameter_tuning_args is None:
                 model = self.generate_model().build_model()
+            # Else, hyperparameter tune it
+            else:
+                model = self.hyperparameter_tune()
 
             # Training for this fold
             # TODO : Use the optimum hyperparamter to train.
@@ -186,7 +189,10 @@ class Trainer:
         )
 
         grid = GridSearchCV(
-            estimator=model, param_grid=self.hyperparameter_tuning_args, n_jobs=-1
+            estimator=model,
+            param_grid=self.hyperparameter_tuning_args,
+            n_jobs=-1,
+            cv=n_splits,
         )
         grid_result = grid.fit(datas, labels)
 
