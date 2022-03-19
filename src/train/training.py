@@ -4,7 +4,7 @@ from src.model import ResNet50Model
 from src.utils.preprocess import encode_label, expand_mel_spec
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
-from src.utils.model import hyperparameter_tune_model
+from src.utils.model import hyperparameter_tune_resnet_model
 
 
 AVAILABLE_MODELS = ["resnet50"]
@@ -185,7 +185,7 @@ class Trainer:
         initial_model = self.generate_model()
 
         model = KerasClassifier(
-            model=hyperparameter_tune_model,
+            model=hyperparameter_tune_resnet_model,
             verbose=0,
             first_dense_units=[],
             second_dense_units=[],
