@@ -185,7 +185,11 @@ class Trainer:
         initial_model = self.generate_model()
 
         model = KerasClassifier(
-            build_fn=initial_model.hyperparameter_tune_model, verbose=0
+            build_fn=initial_model.hyperparameter_tune_model,
+            verbose=0,
+            first_dense_units=[],
+            second_dense_units=[],
+            learning_rate=[],
         )
 
         grid = GridSearchCV(

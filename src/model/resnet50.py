@@ -61,7 +61,7 @@ class ResNet50Model(BaseModel):
         return self.model
 
     def hyperparameter_tune_model(
-        self, first_dense_units, second_dense_units, learning_rate, epochs, batch_size
+        self, first_dense_units, second_dense_units, learning_rate
     ):
         """
         Hyperparameters should contain these:
@@ -83,7 +83,7 @@ class ResNet50Model(BaseModel):
         self.model = tf.keras.Sequential()
 
         self.model.add(
-            tf.keras.application.resnet50.ResNet50(
+            tf.keras.applications.resnet50.ResNet50(
                 include_top=self.include_resnet_top,
                 weights=self.initial_weights,
                 input_shape=self.input_shape,
