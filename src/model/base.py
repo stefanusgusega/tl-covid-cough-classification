@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from typing import Tuple
-
 from utils.random import set_random_seed
 
 
@@ -26,3 +25,7 @@ class BaseModel:
 
     def print_summary(self):
         self.model.summary()
+
+    @abstractmethod
+    def hyperparameter_tune_model(self):
+        set_random_seed()
