@@ -186,7 +186,6 @@ class Trainer:
 
         model = KerasClassifier(
             model=hyperparameter_tune_resnet_model,
-            verbose=0,
             first_dense_units=[],
             second_dense_units=[],
             learning_rate=[],
