@@ -191,7 +191,6 @@ class Trainer:
         grid = GridSearchCV(
             estimator=model,
             param_grid=self.hyperparameter_tuning_args,
-            n_jobs=-1,
             cv=n_splits,
         )
         grid_result = grid.fit(datas, labels)
