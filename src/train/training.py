@@ -197,6 +197,7 @@ class Trainer:
             estimator=model,
             param_grid=self.hyperparameter_tuning_args,
             cv=n_splits,
+            verbose=1,
         )
         grid_result = grid.fit(datas, labels)
 
