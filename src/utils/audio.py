@@ -45,8 +45,8 @@ def generate_cough_segments(
 
     # Define hysteresis thresholds
     rms = np.sqrt(np.mean(np.square(x)))
-    seg_th_l = th_l_multiplier * rms
-    seg_th_h = th_h_multiplier * rms
+    # seg_th_l = th_l_multiplier * rms
+    # seg_th_h = th_h_multiplier * rms
 
     # Segment coughs
     cough_segments = []
@@ -60,7 +60,7 @@ def generate_cough_segments(
 
     for i, sample in enumerate(x**2):
         if cough_in_progress:
-            if sample < seg_th_l:
+            if sample < (th_l_multiplier * rms):
                 below_th_counter += 1
                 if below_th_counter > tolerance:
                     cough_end = i + padding if (i + padding < len(x)) else len(x) - 1
@@ -77,7 +77,7 @@ def generate_cough_segments(
             else:
                 below_th_counter = 0
         else:
-            if sample > seg_th_h:
+            if sample > (th_h_multiplier * rms):
                 cough_start = i - padding if (i - padding >= 0) else 0
                 cough_in_progress = True
 

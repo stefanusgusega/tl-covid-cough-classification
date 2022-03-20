@@ -1,3 +1,7 @@
+"""
+Model util functions that should not be in one class.
+"""
+
 import tensorflow as tf
 from src.model.resnet50 import ResNet50Model
 from src.utils.randomize import set_random_seed
@@ -15,12 +19,6 @@ def hyperparameter_tune_resnet_model(
     * batch_size
     """
     set_random_seed()
-
-    # Check if hyperparameters dictionary is complete
-    # if list(hyperparameters.keys()) == HYPERPARAMETER_KEYS:
-    #     raise Exception(
-    #         f"The hyperparameters is not complete. Should state this keys: {set(HYPERPARAMETER_KEYS) - set(hyperparameters.keys())}"
-    #     )
 
     # Build model
     model = tf.keras.Sequential()
