@@ -1,8 +1,12 @@
+"""
+Data preprocessing util functions
+"""
 import os
 from typing import Tuple
+import pickle as pkl
 import numpy as np
 import pandas as pd
-import pickle as pkl
+from keras.utils.np_utils import to_categorical
 from src.utils.audio import (
     augment_data,
     convert_audio_to_numpy,
@@ -10,7 +14,6 @@ from src.utils.audio import (
     generate_segmented_data,
     pad_audio_with_silence,
 )
-from keras.utils.np_utils import to_categorical
 
 
 def preprocess_covid_dataframe(
@@ -20,13 +23,11 @@ def preprocess_covid_dataframe(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: int = None,
-    is_mel_spec: bool = True,
-    save_to_pickle=True,
     backup_every_stage=True,
     pickle_folder=None,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
-    if save_to_pickle or backup_every_stage:
+    if backup_every_stage:
         # Check if the folder is specified, if not so raise an exception
         if pickle_folder is None:
             raise Exception(
@@ -68,26 +69,13 @@ def preprocess_covid_dataframe(
         )
         print("Backup for padded data created.")
 
-    # Data augmentation
-    # NOW : labels should be contains only 2 labels
-    n_aug = get_pos_neg_diff(segmented_covid_statuses)
-
-    # Data being augmented should contain only COVID-19 audio data
-    covid_data_only = get_covid_data_only(padded_data, segmented_covid_statuses)
-
-    # Augment the positive class
-    augmented_data = augment_data(
-        covid_data_only, n_aug=n_aug, sampling_rate=sampling_rate
-    )
-
-    # IMPORTANT: For testing only, so augmented_data will be pickled
-    save_obj_to_pkl(augmented_data, os.path.join(pickle_folder, "augmented_data.pkl"))
-    augmented_covid_status = np.full(len(augmented_data), "COVID-19")
-
     # Append this augmented_data to actual data
-    balanced_data, balanced_covid_statuses = np.concatenate(
-        (padded_data, augmented_data)
-    ), np.concatenate((segmented_covid_statuses, augmented_covid_status))
+    balanced_data, balanced_covid_statuses = balance_data(
+        padded_data,
+        segmented_covid_statuses,
+        sampling_rate=sampling_rate,
+        pickle_folder=pickle_folder,
+    )
 
     # Backup the data augmentation stage
     if backup_every_stage:
@@ -99,14 +87,13 @@ def preprocess_covid_dataframe(
         print("Backup for balanced data created.")
 
     # Feature extraction
-    if is_mel_spec:
-        features = extract_melspec(
-            balanced_data,
-            sampling_rate=sampling_rate,
-            n_fft=n_fft,
-            hop_length=hop_length,
-            win_length=win_length,
-        )
+    features = extract_melspec(
+        balanced_data,
+        sampling_rate=sampling_rate,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+    )
 
     # TODO: MFCC
 
@@ -114,13 +101,43 @@ def preprocess_covid_dataframe(
     res = features, balanced_covid_statuses.reshape(-1, 1)
 
     # Save to pickle file for the final features
-    if save_to_pickle:
-        print("Saving features...")
-        save_obj_to_pkl(res, os.path.join(pickle_folder, "features.pkl"))
-        print("Features saved.")
+    print("Saving features...")
+    save_obj_to_pkl(res, os.path.join(pickle_folder, "features.pkl"))
+    print("Features saved.")
 
     # Should be returning series of data in (-1, 1) shape and the labels in (-1, 1) too
     return res
+
+
+def balance_data(
+    datas: np.ndarray, labels: np.ndarray, sampling_rate: int = 16000, **kwargs
+):
+    # Data augmentation
+    # NOW : labels should be contains only 2 labels
+    n_aug = get_pos_neg_diff(labels)
+
+    # Data being augmented should contain only COVID-19 audio data
+    covid_data_only = get_covid_data_only(datas, labels)
+
+    # Augment the positive class
+    augmented_data = augment_data(
+        covid_data_only,
+        n_aug=n_aug,
+        sampling_rate=sampling_rate,
+    )
+
+    # IMPORTANT: For testing only, so augmented_data will be pickled
+    save_obj_to_pkl(
+        augmented_data, os.path.join(kwargs["pickle_folder"], "augmented_data.pkl")
+    )
+    augmented_covid_status = np.full(len(augmented_data), "COVID-19")
+
+    # Append this augmented_data to actual data
+    balanced_data, balanced_covid_statuses = np.concatenate(
+        (datas, augmented_data)
+    ), np.concatenate((labels, augmented_covid_status))
+
+    return balanced_data, balanced_covid_statuses
 
 
 def save_obj_to_pkl(to_save, file_path):

@@ -1,3 +1,7 @@
+"""
+Randomizer util functions.
+"""
+
 import os
 import random
 import numpy as np
