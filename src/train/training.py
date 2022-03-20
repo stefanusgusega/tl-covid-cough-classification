@@ -54,7 +54,7 @@ class Trainer:
 
     def train(
         self,
-        hp_model_tuning_folder: str,
+        hp_model_tuning_folder: str = None,
         n_splits: int = 5,
         epochs: int = 100,
         batch_size: int = None,
@@ -103,7 +103,7 @@ class Trainer:
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
 
             model.fit(
-                X=x_folds,
+                x=x_folds,
                 y=y_folds,
                 validation_data=(x_test, y_test),
                 epochs=epochs,
