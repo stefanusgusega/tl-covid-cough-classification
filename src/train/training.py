@@ -62,6 +62,13 @@ class Trainer:
         """
         Train the model and save the hyperparameter model
         """
+
+        if hp_model_tuning_folder is not None:
+            if self.hyperparameter_tuning_args is None:
+                raise Exception(
+                    "Please specify the hyperparameter tuning arguments at the constructor."
+                )
+
         # The outer is to split between data and test
         outer_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
