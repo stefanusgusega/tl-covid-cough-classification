@@ -1,46 +1,41 @@
+"""
+Trainer module.
+"""
 import os
+import pickle as pkl
 import numpy as np
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
-from src.model import ResNet50Model
-from src.utils.preprocess import encode_label, expand_mel_spec
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
+from src.model import ResNet50Model
+from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import hyperparameter_tune_resnet_model
-import pickle as pkl
 
 AVAILABLE_MODELS = ["resnet50"]
 
 
 class Trainer:
+    """
+    This class is used for training and hyperparameter model tuning
+    """
+
     def __init__(
         self,
         audio_datas: np.ndarray,
         audio_labels: np.ndarray,
         model_type: str = "resnet50",
         model_args: dict = None,
-        test_size: float = 0.8,
         hyperparameter_tuning_args: dict = None,
     ) -> None:
         # If not one of available models, throw an exception
         if model_type not in AVAILABLE_MODELS:
             raise Exception(
-                f"The model type should be one of these: {', '.join(AVAILABLE_MODELS)}. Found: {model_type}"
+                f"The model type should be one of these: {', '.join(AVAILABLE_MODELS)}. "
+                f"Found: {model_type}."
             )
 
-        self.X_full = audio_datas
+        self.x_full = audio_datas
         self.y_full = audio_labels
-
-        # TODO : Soon will be removed, because cross validation should apply for both outer and inner loop
-        print("Splitting dataset to ready to train and test...")
-        # Split here in stratified fashion
-        self.X, self.X_test, self.y, self.y_test = train_test_split(
-            self.X_full,
-            self.y_full,
-            test_size=test_size,
-            stratify=self.y_full,
-            random_state=42,
-        )
-        print("Dataset splitted.")
 
         # Init array to save metrics and losses
         self.test_metrics_arr = []
@@ -63,6 +58,9 @@ class Trainer:
         epochs: int = 100,
         batch_size: int = None,
     ):
+        """
+        Train the model and save the hyperparameter model
+        """
         # The outer is to split between data and test
         outer_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
@@ -71,17 +69,17 @@ class Trainer:
         # inner_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
         for outer_idx, (folds_index, test_index) in enumerate(
-            outer_skf.split(self.X_full, self.y_full)
+            outer_skf.split(self.x_full, self.y_full)
         ):
-            X_folds, X_test = self.X_full[folds_index], self.X_full[test_index]
+            x_folds, x_test = self.x_full[folds_index], self.x_full[test_index]
             y_folds, y_test = self.y_full[folds_index], self.y_full[test_index]
 
             # If the model is a resnet-50, the input should be expanded
             # Because ResNet expects a 3D shape
             if self.model_type == "resnet50":
                 # TODO: Should check whether using mel spec or mfcc
-                X_folds = expand_mel_spec(X_folds)
-                X_test = expand_mel_spec(X_test)
+                x_folds = expand_mel_spec(x_folds)
+                x_test = expand_mel_spec(x_test)
 
             # Apply one hot encoding
             y_folds = encode_label(y_folds, "COVID-19")
@@ -94,7 +92,7 @@ class Trainer:
                 model = self.generate_model().build_model()
             # Else, hyperparameter tune it
             else:
-                model = self.hyperparameter_tune(X_folds, y_folds)
+                model = self.hyperparameter_tune(x_folds, y_folds)
 
             # Save the optimized model
             self.save_optimum_hyperparameter_model(hp_model_tuning_folder, outer_idx)
@@ -104,9 +102,9 @@ class Trainer:
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
 
             model.fit(
-                X=X_folds,
+                X=x_folds,
                 y=y_folds,
-                validation_data=(X_test, y_test),
+                validation_data=(x_test, y_test),
                 epochs=epochs,
                 batch_size=batch_size,
                 callbacks=self.callbacks_arr,
@@ -114,19 +112,26 @@ class Trainer:
 
             # Evaluate model for outer loop
             print(f"Evaluating model fold {outer_idx + 1}/{n_splits}...")
-            loss, metric = model.evaluate(X_test, y_test)
+            loss, metric = model.evaluate(x_test, y_test)
 
             # Save the values for outer loop
             self.test_metrics_arr.append(metric)
             self.test_losses_arr.append(loss)
 
     def generate_model(self):
+        """
+        Generate the model based on model type with using model arguments
+        """
         if self.model_type == "resnet50":
             model = ResNet50Model(**self.model_args)
 
         return model
 
     def set_checkpoint_callback(self, checkpoint_path: str, save_weights_only=True):
+        """
+        Set the checkpoint callback for fitting the model
+        """
+
         # Append checkpoint callback
         self.callbacks_arr.append(
             tf.keras.callbacks.ModelCheckpoint(
@@ -135,13 +140,16 @@ class Trainer:
         )
 
     def set_early_stopping_callback(self):
+        """
+        Set the early stopping callback for fitting the model
+        """
         self.callbacks_arr.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss"))
 
     def hyperparameter_tune(
         self, datas: np.ndarray, labels: np.ndarray, n_splits: int = 5
     ):
         """
-        This is the located in deepest loop of nested cross validation.
+        This is located in deepest loop of nested cross validation.
         Should return the best model.
         """
         initial_model = self.generate_model()
@@ -166,12 +174,15 @@ class Trainer:
         return grid_result.best_estimator_
 
     def save_optimum_hyperparameter_model(self, folder: str, fold_number: int):
+        """
+        Save the optimum hyperparameter model for specified traning folds in specified folder.
+        """
         if self.hyperparameter_tuning_args is not None:
             print("Saving the optimum hyperparameter model...")
             with (
                 open(os.path.join(folder, f"optimum_hp_{fold_number}.pkl"), "wb")
-            ) as f:
-                pkl.dump(f)
+            ) as model_file:
+                pkl.dump(model_file)
             print(
                 f"Optimum hyperparameter model saved at {os.path.join(folder, 'optimum_hp.pkl')}."
             )

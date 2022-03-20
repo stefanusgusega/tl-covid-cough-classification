@@ -1,3 +1,6 @@
+"""
+ResNet50Model class.
+"""
 from typing import Tuple
 import tensorflow as tf
 from src.model.base import BaseModel
@@ -15,15 +18,16 @@ class ResNet50Model(BaseModel):
         initial_weights=None,
     ) -> None:
         # Override the BaseModel constructor
-        super(ResNet50Model, self).__init__(
-            input_shape=input_shape, initial_weights=initial_weights
-        )
+        super().__init__(input_shape=input_shape, initial_weights=initial_weights)
 
         # Construct
         self.include_resnet_top = include_resnet_top
         self.model_type = "resnet50"
 
-    def build_model(self, metrics=[tf.keras.metrics.AUC()]):
+    def build_model(self, metrics=None):
+        if metrics is None:
+            metrics = tf.keras.metrics.AUC()
+
         self.model = tf.keras.Sequential()
 
         # ResNet block
