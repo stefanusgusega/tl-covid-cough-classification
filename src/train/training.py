@@ -177,6 +177,7 @@ class Trainer:
     def set_tensorboard_callback(self, log_dir: str):
         """
         Set TensorBoard callback for analysis and visualization needs.
+        TensorBoard source : https://www.tensorflow.org/tensorboard/graphs
         """
         specified_log_dir = os.path.join(
             log_dir, datetime.now().strftime("%Y%m%d-%H%M%S")
