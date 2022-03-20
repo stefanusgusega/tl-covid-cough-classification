@@ -1,6 +1,7 @@
 """
 Trainer module.
 """
+from datetime import datetime
 import os
 import pickle as pkl
 import numpy as np
@@ -172,6 +173,17 @@ class Trainer:
         grid_result = grid.fit(datas, labels)
 
         return grid_result.best_estimator_
+
+    def set_tensorboard_calback(self, log_dir: str):
+        """
+        Set TensorBoard callback for analysis and visualization needs.
+        """
+        specified_log_dir = os.path.join(
+            log_dir, datetime.now().strftime("%Y%m%d-%H%M%S")
+        )
+        self.callbacks_arr.append(
+            tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
+        )
 
     def save_optimum_hyperparameter_model(self, folder: str, fold_number: int):
         """
