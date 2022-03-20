@@ -1,9 +1,16 @@
+"""
+BaseModel class.
+"""
 from abc import abstractmethod
 from typing import Tuple
 from src.utils.randomize import set_random_seed
 
 
 class BaseModel:
+    """
+    This is the parent class of all models.
+    """
+
     def __init__(self, input_shape: Tuple, initial_weights=None) -> None:
         # Check whether the input shape of the model 2D
         if len(input_shape) != 3:
@@ -20,7 +27,7 @@ class BaseModel:
         set_random_seed()
 
     @abstractmethod
-    def build_model(self):
+    def build_model(self, metrics):
         ...
 
     def print_summary(self):

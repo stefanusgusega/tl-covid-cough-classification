@@ -1,1 +1,3 @@
-from .training import Trainer as Trainer
+"""
+Training module.
+"""

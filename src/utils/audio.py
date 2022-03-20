@@ -1,30 +1,42 @@
-from audiomentations import TimeStretch, Gain, Compose
+"""
+Audio util functions.
+"""
+
+import os
+import random
 from typing import Tuple
-from scipy import signal
-from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import librosa
-import os
-import random
+from audiomentations import TimeStretch, Gain, Compose
+from scipy import signal
+from tqdm import tqdm
 
 
 def generate_cough_segments(
-    x, fs, cough_padding=0.1, min_cough_len=0.2, th_l_multiplier=0.1, th_h_multiplier=2
+    x,
+    sampling_rate,
+    cough_padding=0.1,
+    min_cough_len=0.2,
+    th_l_multiplier=0.1,
+    th_h_multiplier=2,
 ):
-    """Preprocess the data by segmenting each file into individual coughs using a hysteresis comparator on the signal power
+    """
+    Preprocess the data by segmenting each file into individual coughs
+    using a hysteresis comparator on the signal power
 
     Inputs:
-    *x (np.array): cough signal
-    *fs (float): sampling frequency in Hz
-    *cough_padding (float): number of seconds added to the beginning and end of each detected cough to make sure coughs are not cut short
-    *min_cough_length (float): length of the minimum possible segment that can be considered a cough
-    *th_l_multiplier (float): multiplier of the RMS energy used as a lower threshold of the hysteresis comparator
-    *th_h_multiplier (float): multiplier of the RMS energy used as a high threshold of the hysteresis comparator
+    * x (np.array): cough signal
+    * sampling_rate (float): sampling frequency in Hz
+    * cough_padding (float): number of seconds added to the beginning and end of each detected cough
+    to make sure coughs are not cut short
+    * min_cough_length (float): length of the minimum possible segment that can be considered a cough
+    * th_l_multiplier (float): multiplier of the RMS energy used as a lower threshold of the hysteresis comparator
+    * th_h_multiplier (float): multiplier of the RMS energy used as a high threshold of the hysteresis comparator
 
     Outputs:
-    *coughSegments (np.array of np.arrays): a list of cough signal arrays corresponding to each cough
-    cough_mask (np.array): an array of booleans that are True at the indices where a cough is in progress
+    * coughSegments (np.array of np.arrays): a list of cough signal arrays corresponding to each cough
+    * cough_mask (np.array): an array of booleans that are True at the indices where a cough is in progress
 
     Source : Coughvid Repository
     """
@@ -38,12 +50,12 @@ def generate_cough_segments(
 
     # Segment coughs
     cough_segments = []
-    padding = round(fs * cough_padding)
-    min_cough_samples = round(fs * min_cough_len)
+    padding = round(sampling_rate * cough_padding)
+    min_cough_samples = round(sampling_rate * min_cough_len)
     cough_start = 0
     cough_end = 0
     cough_in_progress = False
-    tolerance = round(0.05 * fs)
+    tolerance = round(0.05 * sampling_rate)
     below_th_counter = 0
 
     for i, sample in enumerate(x**2):
@@ -115,7 +127,8 @@ def generate_segmented_data(
 
     if len(samples_data) != len(covid_status_data):
         raise Exception(
-            f"The length of the samples data and covid status data is not same. {len(samples_data)} != {len(covid_status_data)}"
+            f"The length of the samples data and covid status data is not same. "
+            f"{len(samples_data)} != {len(covid_status_data)}"
         )
 
     new_data = []
@@ -130,7 +143,8 @@ def generate_segmented_data(
             data, status_data, sampling_rate=sampling_rate
         )
 
-        # TODO: there is a problem if the segments only consisting 1 segment, because it detected as 2D array, not 1D array
+        # ! there is a problem if the segments only consisting 1 segment,
+        # ! because it detected as 2D array, not 1D array
         # ex: np.array([[2]]).shape --> (1, 1). but, np.array([[2], [2,1]]).shape --> (2,)
 
         # Temporary solution: using for loop manually
