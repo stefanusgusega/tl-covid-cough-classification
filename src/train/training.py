@@ -103,7 +103,9 @@ class Trainer:
                 model = self.hyperparameter_tune(x_folds, y_folds)
 
             # Save the optimized model
-            self.save_optimum_hyperparameter_model(hp_model_tuning_folder, outer_idx)
+            self.save_optimum_hyperparameter_model(
+                hp_model_tuning_folder, model, outer_idx
+            )
 
             # Training for this fold
             # TODO : Use the optimum hyperparamter to train.
@@ -193,7 +195,7 @@ class Trainer:
             tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
         )
 
-    def save_optimum_hyperparameter_model(self, folder: str, fold_number: int):
+    def save_optimum_hyperparameter_model(self, folder: str, model, fold_number: int):
         """
         Save the optimum hyperparameter model for specified traning folds in specified folder.
         """
@@ -202,7 +204,7 @@ class Trainer:
             with (
                 open(os.path.join(folder, f"optimum_hp_{fold_number}.pkl"), "wb")
             ) as model_file:
-                pkl.dump(model_file)
+                pkl.dump(model, model_file)
             print(
                 f"Optimum hyperparameter model saved at {os.path.join(folder, 'optimum_hp.pkl')}."
             )
