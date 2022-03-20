@@ -169,8 +169,8 @@ class Trainer:
         if self.hyperparameter_tuning_args is not None:
             print("Saving the optimum hyperparameter model...")
             with (
-                open(os.path.join(folder, f"optimum_hp_{fold_number}.pkl"), "wb") as f
-            ):
+                open(os.path.join(folder, f"optimum_hp_{fold_number}.pkl"), "wb")
+            ) as f:
                 pkl.dump(f)
             print(
                 f"Optimum hyperparameter model saved at {os.path.join(folder, 'optimum_hp.pkl')}."
