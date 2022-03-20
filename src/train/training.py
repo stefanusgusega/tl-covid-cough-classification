@@ -97,7 +97,7 @@ class Trainer:
                 model = self.hyperparameter_tune(X_folds, y_folds)
 
             # Save the optimized model
-            self.save_optimum_hyperparameter_model(hp_model_tuning_folder)
+            self.save_optimum_hyperparameter_model(hp_model_tuning_folder, outer_idx)
 
             # Training for this fold
             # TODO : Use the optimum hyperparamter to train.
@@ -119,55 +119,6 @@ class Trainer:
             # Save the values for outer loop
             self.test_metrics_arr.append(metric)
             self.test_losses_arr.append(loss)
-
-    # ! Temporarily unused
-    def stratified_k_fold_cross_validation(
-        self, n_splits: int = 5, epochs: int = 100, batch_size: int = None
-    ):
-        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-
-        # Outer loop
-        for idx, (train_index, val_index) in enumerate(skf.split(self.X, self.y)):
-            # 80 : 20 --> 80 will be stratified 5 fold cross validated
-            X_train, X_val = self.X[train_index], self.X[val_index]
-            y_train, y_val = self.y[train_index], self.y[val_index]
-
-            # If the model is a resnet-50, the input should be expanded
-            # Because ResNet expects a 3D shape
-            if self.model_type == "resnet50":
-                # TODO: Should check whether using mel spec or mfcc
-                X_train = expand_mel_spec(X_train)
-                X_val = expand_mel_spec(X_val)
-
-            # Apply one hot encoding
-            y_train = encode_label(y_train, "COVID-19")
-            y_val = encode_label(y_val, "COVID-19")
-
-            if self.hyperparameter_tuning_args is not None:
-                self.hyperparameter_tune(
-                    n_splits=5,
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    callbacks=self.callbacks_arr,
-                )
-
-            model = self.generate_model().build_model()
-
-            print(f"Training for fold {idx+1}/{n_splits}...")
-            model.fit(
-                x=X_train,
-                y=y_train,
-                validation_data=(X_val, y_val),
-                epochs=epochs,
-                batch_size=batch_size,
-                callbacks=self.callbacks_arr,
-            )
-
-            print(f"Evaluating model fold {idx + 1}/{n_splits}...")
-            loss, metric = model.evaluate(X_val, y_val)
-
-            self.metrics_arr.append(metric)
-            self.losses_arr.append(loss)
 
     def generate_model(self):
         if self.model_type == "resnet50":
@@ -214,10 +165,12 @@ class Trainer:
 
         return grid_result.best_estimator_
 
-    def save_optimum_hyperparameter_model(self, folder: str):
+    def save_optimum_hyperparameter_model(self, folder: str, fold_number: int):
         if self.hyperparameter_tuning_args is not None:
             print("Saving the optimum hyperparameter model...")
-            with (open(os.path.join(folder, "optimum_hp.pkl"), "wb") as f):
+            with (
+                open(os.path.join(folder, f"optimum_hp_{fold_number}.pkl"), "wb") as f
+            ):
                 pkl.dump(f)
             print(
                 f"Optimum hyperparameter model saved at {os.path.join(folder, 'optimum_hp.pkl')}."
