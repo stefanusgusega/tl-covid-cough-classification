@@ -112,8 +112,8 @@ class Trainer:
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
 
             model.fit(
-                x=x_folds,
-                y=y_folds,
+                x_folds,
+                y_folds,
                 validation_data=(x_test, y_test),
                 epochs=epochs,
                 batch_size=batch_size,
@@ -206,5 +206,5 @@ class Trainer:
             ) as model_file:
                 pkl.dump(model, model_file)
             print(
-                f"Optimum hyperparameter model saved at {os.path.join(folder, 'optimum_hp.pkl')}."
+                f"Optimum hyperparameter model saved at {os.path.join(folder, f'optimum_hp_{fold_number}.pkl')}."
             )
