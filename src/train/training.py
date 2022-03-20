@@ -174,7 +174,7 @@ class Trainer:
 
         return grid_result.best_estimator_
 
-    def set_tensorboard_calback(self, log_dir: str):
+    def set_tensorboard_callback(self, log_dir: str):
         """
         Set TensorBoard callback for analysis and visualization needs.
         """
