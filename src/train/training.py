@@ -10,7 +10,7 @@ import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
 from src.model import ResNet50Model
 from src.utils.preprocess import encode_label, expand_mel_spec
-from src.utils.model import hyperparameter_tune_resnet_model
+from src.utils.model import evaluate_model, hyperparameter_tune_resnet_model
 
 AVAILABLE_MODELS = ["resnet50"]
 
@@ -41,8 +41,8 @@ class Trainer:
         # Init array to save metrics and losses
         self.test_metrics_arr = []
         self.val_metrics_arr = []
-        self.test_losses_arr = []
-        self.val_losses_arr = []
+        # self.test_losses_arr = []
+        # self.val_losses_arr = []
 
         # Init callbacks array
         self.callbacks_arr = []
@@ -122,11 +122,11 @@ class Trainer:
 
             # Evaluate model for outer loop
             print(f"Evaluating model fold {outer_idx + 1}/{n_splits}...")
-            loss, metric = model.evaluate(x_test, y_test)
+            metric = evaluate_model(model=model, x=x_test, y=y_test)
 
             # Save the values for outer loop
             self.test_metrics_arr.append(metric)
-            self.test_losses_arr.append(loss)
+            # self.test_losses_arr.append(loss)
 
     def generate_model(self):
         """
@@ -166,11 +166,15 @@ class Trainer:
 
         model = KerasClassifier(
             model=hyperparameter_tune_resnet_model,
+            optimizer="adam",
+            loss=tf.keras.losses.BinaryCrossentropy(),
+            metrics=[tf.keras.metrics.AUC()],
+            random_state=42,
+            # This is kwargs
             first_dense_units=[],
             second_dense_units=[],
             learning_rate=[],
             initial_model=initial_model,
-            random_state=42,
         )
 
         grid = GridSearchCV(
