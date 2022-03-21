@@ -29,3 +29,14 @@ $ source env/Scripts/activate
   > Set-ExecutionPolicy Unrestricted
   > env\Scripts\activate
   ```
+
+## Get started
+1. Activate Virtual Environment
+2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+3. Install pre-commit
+```bash
+pre-commit install
+```
