@@ -1,18 +1,4 @@
 repos:
-- repo: local
-  # rev: v2.12.2
-  hooks:
-    - id: pylint
-      name: pylint
-      entry: pylint
-      language: system
-      types: [python]
-      args:
-        [
-          "src/",
-          "-rn", # Only display messages
-          "-sn", # Don't display the score
-        ]
 - repo: https://github.com/psf/black
   rev: 22.1.0
   hooks:

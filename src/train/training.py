@@ -1,7 +1,6 @@
 """
 Trainer module.
 """
-from datetime import datetime
 import os
 import pickle as pkl
 import numpy as np
@@ -10,7 +9,11 @@ import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
 from src.model import ResNet50Model
 from src.utils.preprocess import encode_label, expand_mel_spec
-from src.utils.model import evaluate_model, hyperparameter_tune_resnet_model
+from src.utils.model import (
+    evaluate_model,
+    generate_tensorboard_callback,
+    hyperparameter_tune_resnet_model,
+)
 
 AVAILABLE_MODELS = ["resnet50"]
 
@@ -27,6 +30,7 @@ class Trainer:
         model_type: str = "resnet50",
         model_args: dict = None,
         hyperparameter_tuning_args: dict = None,
+        tensorboard_log_dir: str = None,
     ) -> None:
         # If not one of available models, throw an exception
         if model_type not in AVAILABLE_MODELS:
@@ -51,6 +55,12 @@ class Trainer:
         self.model_args = model_args
 
         self.hyperparameter_tuning_args = hyperparameter_tuning_args
+        self.using_tensorboard = False
+
+        if tensorboard_log_dir is not None:
+            self.using_tensorboard = True
+
+        self.tensorboard_log_dir = tensorboard_log_dir
 
     def train(
         self,
@@ -111,13 +121,20 @@ class Trainer:
             # TODO : Use the optimum hyperparamter to train.
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
 
+            # Always reset the TensorBoard callback
+            # whenever using TensorBoard
+            additional_callbacks = []
+            if self.using_tensorboard:
+                tb_callback = generate_tensorboard_callback(self.tensorboard_log_dir)
+                additional_callbacks.append(tb_callback)
+
             model.fit(
                 x_folds,
                 y_folds,
                 validation_data=(x_test, y_test),
                 epochs=epochs,
                 batch_size=batch_size,
-                callbacks=self.callbacks_arr,
+                callbacks=[*self.callbacks_arr, *additional_callbacks],
             )
 
             # Evaluate model for outer loop
@@ -184,18 +201,6 @@ class Trainer:
         grid_result = grid.fit(datas, labels)
 
         return grid_result.best_estimator_
-
-    def set_tensorboard_callback(self, log_dir: str):
-        """
-        Set TensorBoard callback for analysis and visualization needs.
-        TensorBoard source : https://www.tensorflow.org/tensorboard/graphs
-        """
-        specified_log_dir = os.path.join(
-            log_dir, datetime.now().strftime("%Y%m%d-%H%M%S")
-        )
-        self.callbacks_arr.append(
-            tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
-        )
 
     def save_optimum_hyperparameter_model(self, folder: str, model, fold_number: int):
         """
