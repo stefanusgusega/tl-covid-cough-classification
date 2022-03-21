@@ -167,13 +167,11 @@ class Trainer:
         model = KerasClassifier(
             model=hyperparameter_tune_resnet_model,
             optimizer="adam",
-            loss=tf.keras.losses.BinaryCrossentropy(),
-            metrics=[tf.keras.metrics.AUC()],
             random_state=42,
             # This is kwargs
             first_dense_units=[],
             second_dense_units=[],
-            learning_rate=[],
+            learning_rates=[],
             initial_model=initial_model,
         )
 

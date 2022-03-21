@@ -9,13 +9,13 @@ from src.utils.randomize import set_random_seed
 
 
 def hyperparameter_tune_resnet_model(
-    initial_model: ResNet50Model, first_dense_units, second_dense_units
+    initial_model: ResNet50Model, first_dense_units, second_dense_units, learning_rates
 ) -> tf.keras.Model:
     """
     Hyperparameters should contain these:
     * first_dense_units
     * second_dense_units
-    * learning_rate
+    * learning_rates
     * epochs
     * batch_size
     """
@@ -39,6 +39,11 @@ def hyperparameter_tune_resnet_model(
     model.add(tf.keras.layers.Dense(second_dense_units, activation="relu"))
     model.add(tf.keras.layers.Dense(2, activation="softmax"))
 
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rates),
+        loss=tf.keras.losses.BinaryCrossentropy(),
+        metrics=[tf.keras.metrics.AUC()],
+    )
     return model
 
 
