@@ -40,11 +40,12 @@ def append_format(
     return with_ext_df
 
 
-def filter_cough(df: pd.DataFrame, column_name: str, threshold_detected: float = 0.9):
-    if column_name not in df.columns:
-        raise Exception(f"No column named '{column_name}'")
-
-    return df[df[column_name] >= threshold_detected]
+def filter_cough(df: pd.DataFrame, cough_detected: float = 0.9, snr: float = 1.0):
+    """
+    Filter the cough based on ```cough_detected``` value and ```SNR``` value.
+    This function is specified only for COUGHVID dataset.
+    """
+    return df[(df["cough_detected"] >= cough_detected) & (df["SNR"] >= snr)]
 
 
 def filter_covid(
