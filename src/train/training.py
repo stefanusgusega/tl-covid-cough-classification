@@ -118,7 +118,6 @@ class Trainer:
             )
 
             # Training for this fold
-            # TODO : Use the optimum hyperparamter to train.
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
 
             # Always reset the TensorBoard callback

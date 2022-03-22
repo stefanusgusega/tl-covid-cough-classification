@@ -26,7 +26,7 @@ class ResNet50Model(BaseModel):
 
     def build_model(self, metrics=None):
         if metrics is None:
-            metrics = tf.keras.metrics.AUC()
+            metrics = [tf.keras.metrics.AUC()]
 
         self.model = tf.keras.Sequential()
 
