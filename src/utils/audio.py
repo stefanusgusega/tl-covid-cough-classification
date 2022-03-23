@@ -170,7 +170,9 @@ def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:
 
     new_audio_datas = []
 
-    for audio_data in audio_datas:
+    print("Equalizing data...")
+
+    for audio_data in tqdm(audio_datas, total=len(audio_datas)):
         # If length less than offset, then center pad it
         if len(audio_data) <= offset:
             padded_data = librosa.util.pad_center(
@@ -185,6 +187,8 @@ def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:
 
         # Trim it
         new_audio_datas.append(audio_data[random_start : (random_start + offset)])
+
+    print("Data equalized.")
 
     return np.array(new_audio_datas)
 
