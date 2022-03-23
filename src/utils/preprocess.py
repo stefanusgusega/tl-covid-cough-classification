@@ -178,7 +178,7 @@ def undersample_data(audio_datas: np.ndarray, labels: np.ndarray, pivot_label):
     new_labels = []
     for label in np.unique(labels):
         # Get the index of the label observed
-        labels_idx = np.argwhere(labels == label)
+        labels_idx = np.argwhere(labels == label).flatten()
 
         # Pick randomly where idx will be being kept when not pivot_label
         being_keep_idx = np.random.choice(labels_idx, size=n_data_pivot, replace=False)
