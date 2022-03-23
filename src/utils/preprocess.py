@@ -193,7 +193,7 @@ def undersample_data(audio_datas: np.ndarray, labels: np.ndarray, pivot_label):
 
         # Append to the list
         new_datas.append(new_data)
-        new_labels.append(label)
+        new_labels.append(np.full((n_data_pivot,), fill_value=label))
 
     return np.concatenate(np.array(new_datas)), np.array(new_labels).flatten()
 
