@@ -186,10 +186,10 @@ def undersample_data(audio_datas: np.ndarray, labels: np.ndarray, pivot_label):
         # And then take the correlated data
         # If not pivot label, based on random chosen data
         if label != pivot_label:
-            new_data = np.take(audio_datas, being_keep_idx)
+            new_data = audio_datas[being_keep_idx]
         # If pivot label, based on labels_idx
         else:
-            new_data = np.take(audio_datas, labels_idx)
+            new_data = audio_datas[labels_idx]
 
         # Append to the list
         new_datas.append(new_data)
