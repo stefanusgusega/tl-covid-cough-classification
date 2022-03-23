@@ -15,7 +15,8 @@ from tqdm import tqdm
 def generate_cough_segments(
     x,
     sampling_rate,
-    cough_padding=0.2,
+    # Coughvid : cough_padding=0.2
+    cough_padding=0.1,
     min_cough_len=0.2,
     th_l_multiplier=0.1,
     th_h_multiplier=2,
@@ -54,7 +55,8 @@ def generate_cough_segments(
     cough_start = 0
     cough_end = 0
     cough_in_progress = False
-    tolerance = round(0.01 * sampling_rate)
+    # Coughvid : round(0.01 * sr)
+    tolerance = round(0.05 * sampling_rate)
     below_th_counter = 0
 
     for i, sample in enumerate(x**2):
