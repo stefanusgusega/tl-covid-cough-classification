@@ -10,9 +10,9 @@ from keras.utils.np_utils import to_categorical
 from src.utils.audio import (
     augment_data,
     convert_audio_to_numpy,
+    equalize_audio_duration,
     extract_melspec,
     generate_segmented_data,
-    pad_audio_with_silence,
 )
 
 
@@ -58,20 +58,20 @@ def preprocess_covid_dataframe(
         )
         print("Backup for segmented data created.")
 
-    # Pad the data
-    padded_data = pad_audio_with_silence(segmented_data)
+    # Equalize the data duration
+    equal_duration_data = equalize_audio_duration(segmented_data)
 
     if backup_every_stage:
-        print("Creating backup for padded data...")
+        print("Creating backup for equal duration data...")
         save_obj_to_pkl(
-            (padded_data, segmented_covid_statuses),
-            os.path.join(pickle_folder, "padded_data.pkl"),
+            (equal_duration_data, segmented_covid_statuses),
+            os.path.join(pickle_folder, "equal_duration_data.pkl"),
         )
-        print("Backup for padded data created.")
+        print("Backup for equal duration data created.")
 
     # Append this augmented_data to actual data
     balanced_data, balanced_covid_statuses = balance_data(
-        padded_data,
+        equal_duration_data,
         segmented_covid_statuses,
         sampling_rate=sampling_rate,
         pickle_folder=pickle_folder,

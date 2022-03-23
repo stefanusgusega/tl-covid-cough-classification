@@ -3,7 +3,6 @@ Audio util functions.
 """
 
 import os
-import random
 from typing import Tuple
 import numpy as np
 import pandas as pd
@@ -159,36 +158,29 @@ def generate_segmented_data(
     return np.array(new_data), np.concatenate(statuses_data)
 
 
-def pad_audio_with_silence(audio_datas: np.ndarray) -> np.ndarray:
-    # Search for the longest duration
-    # Map to audio length
+def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:
+    # Get length of audio by mapping len function
     audio_length_func = np.vectorize(len)
     audio_length_arr = audio_length_func(audio_datas)
 
-    # Get the max length
-    max_length = max(audio_length_arr)
+    # Set offset value by mean + 2*std
+    offset = round(np.mean(audio_length_arr) + 2 * np.std(audio_length_arr))
 
     new_audio_datas = []
 
-    print("Padding audio with silence...")
+    for audio_data in audio_datas:
+        # If length less than offset, then center pad it
+        if len(audio_data) <= offset:
+            padded_data = librosa.util.pad_center(data=audio_data, size=offset)
+            new_audio_datas.append(padded_data)
+            continue
 
-    # For each audio
-    for audio in tqdm(audio_datas):
-        # Pad the beginning audio
-        pad_begin_len = random.randint(0, max_length - len(audio))
+        # Else, trim it
+        # Randomize the start state
+        random_start = np.random.randint(0, len(audio_data) - offset)
 
-        # Pad the ending audio
-        pad_end_len = max_length - len(audio) - pad_begin_len
-
-        # Create zeros array
-        pad_begin = np.zeros(pad_begin_len)
-        pad_end = np.zeros(pad_end_len)
-
-        # Concat
-        new_data = np.concatenate((pad_begin, audio, pad_end))
-
-        # Append
-        new_audio_datas.append(new_data)
+        # Trim it
+        new_audio_datas.append(audio_data[random_start : (random_start + offset)])
 
     return np.array(new_audio_datas)
 
