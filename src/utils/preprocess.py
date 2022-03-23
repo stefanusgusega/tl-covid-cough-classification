@@ -195,7 +195,7 @@ def undersample_data(audio_datas: np.ndarray, labels: np.ndarray, pivot_label):
         new_datas.append(new_data)
         new_labels.append(label)
 
-    return np.array(new_datas), np.array(new_labels).flatten()
+    return np.concatenate(np.array(new_datas)), np.array(new_labels).flatten()
 
 
 def expand_mel_spec(old_mel_specs: np.ndarray):
