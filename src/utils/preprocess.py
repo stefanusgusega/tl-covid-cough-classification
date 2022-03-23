@@ -69,15 +69,23 @@ def preprocess_covid_dataframe(
         )
         print("Backup for equal duration data created.")
 
+    # ? This is the data augmentation
     # Append this augmented_data to actual data
-    balanced_data, balanced_covid_statuses = balance_data(
-        equal_duration_data,
-        segmented_covid_statuses,
-        sampling_rate=sampling_rate,
-        pickle_folder=pickle_folder,
+    # balanced_data, balanced_covid_statuses = balance_data(
+    #     equal_duration_data,
+    #     segmented_covid_statuses,
+    #     sampling_rate=sampling_rate,
+    #     pickle_folder=pickle_folder,
+    # )
+
+    # Do undersampling
+    balanced_data, balanced_covid_statuses = undersample_data(
+        audio_datas=equal_duration_data,
+        labels=segmented_covid_statuses,
+        pivot_label="COVID-19",
     )
 
-    # Backup the data augmentation stage
+    # Backup the balancing data stage
     if backup_every_stage:
         print("Creating backup for balanced data...")
         save_obj_to_pkl(
@@ -163,8 +171,31 @@ def get_pos_neg_diff(status_datas: np.ndarray):
     return abs(np.diff(unique_counts))[0]
 
 
-def undersample_data(audio_datas: np.ndarray, labels: np.ndarray):
-    ...
+def undersample_data(audio_datas: np.ndarray, labels: np.ndarray, pivot_label):
+    n_data_pivot = np.count_nonzero(labels == pivot_label)
+
+    new_datas = []
+    new_labels = []
+    for label in np.unique(labels):
+        # Get the index of the label observed
+        labels_idx = np.argwhere(labels == label)
+
+        # Pick randomly where idx will be being kept when not pivot_label
+        being_keep_idx = np.random.choice(labels_idx, size=n_data_pivot, replace=False)
+
+        # And then take the correlated data
+        # If not pivot label, based on random chosen data
+        if label != pivot_label:
+            new_data = np.take(audio_datas, being_keep_idx)
+        # If pivot label, based on labels_idx
+        else:
+            new_data = np.take(audio_datas, labels_idx)
+
+        # Append to the list
+        new_datas.append(new_data)
+        new_labels.append(label)
+
+    return np.array(new_datas), np.array(new_labels).flatten()
 
 
 def expand_mel_spec(old_mel_specs: np.ndarray):
