@@ -113,9 +113,11 @@ def preprocess_covid_dataframe(
         #     labels=segmented_covid_statuses,
         #     pivot_label="COVID-19",
         # )
+        print("Balancing data using undersampling...")
         balanced_data, balanced_covid_statuses = RandomUnderSampler(
             sampling_strategy="majority", random_state=42
         ).fit_resample(equal_duration_data, segmented_covid_statuses)
+        print("Data balanced.")
 
         # Backup the balancing data stage
         if backup_every_stage:
