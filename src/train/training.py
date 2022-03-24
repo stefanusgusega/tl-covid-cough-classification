@@ -194,6 +194,7 @@ class Trainer:
         grid = GridSearchCV(
             estimator=model,
             param_grid=self.hyperparameter_tuning_args,
+            scoring="roc-auc",
             cv=n_splits,
             verbose=1,
         )
