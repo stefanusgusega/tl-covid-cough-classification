@@ -35,77 +35,100 @@ def preprocess_covid_dataframe(
                 "Please specify the path that you wish to dump the results of this conversion."
             )
 
-    numpy_data, covid_statuses = convert_audio_to_numpy(
-        df, audio_folder_path=audio_folder_path, sampling_rate=sampling_rate
-    )
-
-    if backup_every_stage:
-        print("Creating backup for numpy data...")
-        save_obj_to_pkl(
-            (numpy_data, covid_statuses),
-            os.path.join(pickle_folder, "numpy_data.pkl"),
+    try:
+        numpy_data, covid_statuses = load_obj_from_pkl(
+            os.path.join(pickle_folder, "numpy_data.pkl")
         )
-        print("Backup for numpy data created.")
-
-    segmented_data, segmented_covid_statuses = generate_segmented_data(
-        numpy_data, covid_statuses, sampling_rate=sampling_rate
-    )
-
-    if backup_every_stage:
-        print("Creating backup for segmented data...")
-        save_obj_to_pkl(
-            (segmented_data, segmented_covid_statuses),
-            os.path.join(pickle_folder, "segmented_data.pkl"),
+    except FileNotFoundError:
+        numpy_data, covid_statuses = convert_audio_to_numpy(
+            df, audio_folder_path=audio_folder_path, sampling_rate=sampling_rate
         )
-        print("Backup for segmented data created.")
+
+        if backup_every_stage:
+            print("Creating backup for numpy data...")
+            save_obj_to_pkl(
+                (numpy_data, covid_statuses),
+                os.path.join(pickle_folder, "numpy_data.pkl"),
+            )
+            print("Backup for numpy data created.")
+
+    try:
+        segmented_data, segmented_covid_statuses = load_obj_from_pkl(
+            os.path.join(pickle_folder, "segmented_data.pkl")
+        )
+    except FileNotFoundError:
+        segmented_data, segmented_covid_statuses = generate_segmented_data(
+            numpy_data, covid_statuses, sampling_rate=sampling_rate
+        )
+
+        if backup_every_stage:
+            print("Creating backup for segmented data...")
+            save_obj_to_pkl(
+                (segmented_data, segmented_covid_statuses),
+                os.path.join(pickle_folder, "segmented_data.pkl"),
+            )
+            print("Backup for segmented data created.")
 
     # Equalize the data duration
-    equal_duration_data = equalize_audio_duration(segmented_data)
+    try:
+        equal_duration_data = load_obj_from_pkl(
+            os.path.join(pickle_folder, "equal_duration_data.pkl")
+        )[0]
+    except FileNotFoundError:
+        equal_duration_data = equalize_audio_duration(segmented_data)
 
-    if backup_every_stage:
-        print("Creating backup for equal duration data...")
-        save_obj_to_pkl(
-            (equal_duration_data, segmented_covid_statuses),
-            os.path.join(pickle_folder, "equal_duration_data.pkl"),
+        if backup_every_stage:
+            print("Creating backup for equal duration data...")
+            save_obj_to_pkl(
+                (equal_duration_data, segmented_covid_statuses),
+                os.path.join(pickle_folder, "equal_duration_data.pkl"),
+            )
+            print("Backup for equal duration data created.")
+
+    try:
+        balanced_data, balanced_covid_statuses = load_obj_from_pkl(
+            os.path.join(pickle_folder, "balanced_data.pkl")
         )
-        print("Backup for equal duration data created.")
+    except FileNotFoundError:
+        # ? This is the data augmentation
+        # Append this augmented_data to actual data
+        # balanced_data, balanced_covid_statuses = balance_data(
+        #     equal_duration_data,
+        #     segmented_covid_statuses,
+        #     sampling_rate=sampling_rate,
+        #     pickle_folder=pickle_folder,
+        # )
 
-    # ? This is the data augmentation
-    # Append this augmented_data to actual data
-    # balanced_data, balanced_covid_statuses = balance_data(
-    #     equal_duration_data,
-    #     segmented_covid_statuses,
-    #     sampling_rate=sampling_rate,
-    #     pickle_folder=pickle_folder,
-    # )
+        # Do undersampling
+        # balanced_data, balanced_covid_statuses = undersample_data(
+        #     audio_datas=equal_duration_data,
+        #     labels=segmented_covid_statuses,
+        #     pivot_label="COVID-19",
+        # )
+        balanced_data, balanced_covid_statuses = RandomUnderSampler(
+            sampling_strategy="majority", random_state=42
+        ).fit_resample(equal_duration_data, segmented_covid_statuses)
 
-    # Do undersampling
-    # balanced_data, balanced_covid_statuses = undersample_data(
-    #     audio_datas=equal_duration_data,
-    #     labels=segmented_covid_statuses,
-    #     pivot_label="COVID-19",
-    # )
-    balanced_data, balanced_covid_statuses = RandomUnderSampler(
-        sampling_strategy="majority", random_state=42
-    ).fit_resample(equal_duration_data, segmented_covid_statuses)
-
-    # Backup the balancing data stage
-    if backup_every_stage:
-        print("Creating backup for balanced data...")
-        save_obj_to_pkl(
-            (balanced_data, balanced_covid_statuses),
-            os.path.join(pickle_folder, "balanced_data.pkl"),
-        )
-        print("Backup for balanced data created.")
+        # Backup the balancing data stage
+        if backup_every_stage:
+            print("Creating backup for balanced data...")
+            save_obj_to_pkl(
+                (balanced_data, balanced_covid_statuses),
+                os.path.join(pickle_folder, "balanced_data.pkl"),
+            )
+            print("Backup for balanced data created.")
 
     # Feature extraction
-    features = extract_melspec(
-        balanced_data,
-        sampling_rate=sampling_rate,
-        n_fft=n_fft,
-        hop_length=hop_length,
-        win_length=win_length,
-    )
+    try:
+        features = load_obj_from_pkl(os.path.join(pickle_folder, "features.pkl"))[0]
+    except FileNotFoundError:
+        features = extract_melspec(
+            balanced_data,
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+        )
 
     # TODO: MFCC
 
@@ -155,6 +178,11 @@ def balance_data(
 def save_obj_to_pkl(to_save, file_path):
     with (open(file_path, "wb")) as f:
         pkl.dump(to_save, f)
+
+
+def load_obj_from_pkl(file_path):
+    with (open(file_path, "rb")) as f:
+        return pkl.load(f)
 
 
 def get_covid_data_only(
