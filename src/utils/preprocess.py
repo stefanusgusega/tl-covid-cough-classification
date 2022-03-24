@@ -36,9 +36,11 @@ def preprocess_covid_dataframe(
             )
 
     try:
+        print("Loading numpy data from 'numpy_data.pkl'...")
         numpy_data, covid_statuses = load_obj_from_pkl(
             os.path.join(pickle_folder, "numpy_data.pkl")
         )
+        print("Numpy data loaded.")
     except FileNotFoundError:
         numpy_data, covid_statuses = convert_audio_to_numpy(
             df, audio_folder_path=audio_folder_path, sampling_rate=sampling_rate
@@ -53,9 +55,11 @@ def preprocess_covid_dataframe(
             print("Backup for numpy data created.")
 
     try:
+        print("Loading segmented data from 'segmented_data.pkl'...")
         segmented_data, segmented_covid_statuses = load_obj_from_pkl(
             os.path.join(pickle_folder, "segmented_data.pkl")
         )
+        print("Segmented data loaded.")
     except FileNotFoundError:
         segmented_data, segmented_covid_statuses = generate_segmented_data(
             numpy_data, covid_statuses, sampling_rate=sampling_rate
@@ -71,9 +75,11 @@ def preprocess_covid_dataframe(
 
     # Equalize the data duration
     try:
+        print("Loading equal duration data from 'equal_duration_data.pkl'...")
         equal_duration_data = load_obj_from_pkl(
             os.path.join(pickle_folder, "equal_duration_data.pkl")
         )[0]
+        print("Equal duration data loaded.")
     except FileNotFoundError:
         equal_duration_data = equalize_audio_duration(segmented_data)
 
@@ -86,9 +92,11 @@ def preprocess_covid_dataframe(
             print("Backup for equal duration data created.")
 
     try:
+        print("Loading balanced data from 'balanced_data.pkl'...")
         balanced_data, balanced_covid_statuses = load_obj_from_pkl(
             os.path.join(pickle_folder, "balanced_data.pkl")
         )
+        print("Balanced data loaded.")
     except FileNotFoundError:
         # ? This is the data augmentation
         # Append this augmented_data to actual data
@@ -120,7 +128,9 @@ def preprocess_covid_dataframe(
 
     # Feature extraction
     try:
+        print("Loading features from 'features.pkl'...")
         features = load_obj_from_pkl(os.path.join(pickle_folder, "features.pkl"))[0]
+        print("Features loaded.")
     except FileNotFoundError:
         features = extract_melspec(
             balanced_data,
