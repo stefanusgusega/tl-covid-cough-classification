@@ -9,7 +9,6 @@ import pandas as pd
 from keras.utils.np_utils import to_categorical
 from imblearn.under_sampling import RandomUnderSampler
 from src.utils.audio import (
-    augment_data,
     convert_audio_to_numpy,
     equalize_audio_duration,
     extract_melspec,
@@ -35,6 +34,58 @@ def preprocess_covid_dataframe(
                 "Please specify the path that you wish to dump the results of this conversion."
             )
 
+    numpy_data, covid_statuses = convert(
+        df=df,
+        audio_folder_path=audio_folder_path,
+        sampling_rate=sampling_rate,
+        pickle_folder=pickle_folder,
+        backup_every_stage=backup_every_stage,
+    )
+
+    segmented_data, segmented_covid_statuses = segment(
+        numpy_data=numpy_data,
+        covid_statuses=covid_statuses,
+        sampling_rate=sampling_rate,
+        pickle_folder=pickle_folder,
+        backup_every_stage=backup_every_stage,
+    )
+
+    equal_duration_data, segmented_covid_statuses = equalize(
+        segmented_data=segmented_data,
+        segmented_covid_statuses=segmented_covid_statuses,
+        pickle_folder=pickle_folder,
+        backup_every_stage=backup_every_stage,
+    )
+
+    balanced_data, balanced_covid_statuses = balance(
+        equal_duration_data=equal_duration_data,
+        segmented_covid_statuses=segmented_covid_statuses,
+        pickle_folder=pickle_folder,
+        backup_every_stage=backup_every_stage,
+    )
+
+    features = extract(
+        balanced_data=balanced_data,
+        sampling_rate=sampling_rate,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        pickle_folder=pickle_folder,
+    )
+
+    # NOW : returning features in 2D shape and status in 2D shape with one hot encoding fashion
+    res = features, balanced_covid_statuses.reshape(-1, 1)
+
+    # Save to pickle file for the final features
+    print("Saving features...")
+    save_obj_to_pkl(res, os.path.join(pickle_folder, "features.pkl"))
+    print("Features saved.")
+
+    # Should be returning series of data in (-1, 1) shape and the labels in (-1, 1) too
+    return res
+
+
+def convert(df, audio_folder_path, sampling_rate, pickle_folder, backup_every_stage):
     try:
         print("Loading numpy data from 'numpy_data.pkl'...")
         numpy_data, covid_statuses = load_obj_from_pkl(
@@ -54,6 +105,12 @@ def preprocess_covid_dataframe(
             )
             print("Backup for numpy data created.")
 
+    return numpy_data, covid_statuses
+
+
+def segment(
+    numpy_data, covid_statuses, sampling_rate, pickle_folder, backup_every_stage
+):
     try:
         print("Loading segmented data from 'segmented_data.pkl'...")
         segmented_data, segmented_covid_statuses = load_obj_from_pkl(
@@ -73,7 +130,13 @@ def preprocess_covid_dataframe(
             )
             print("Backup for segmented data created.")
 
-    # Equalize the data duration
+    return segmented_data, segmented_covid_statuses
+
+
+def equalize(
+    segmented_data, segmented_covid_statuses, pickle_folder, backup_every_stage
+):
+    # Equalize the data duration, the data should be produced from segmentation
     try:
         print("Loading equal duration data from 'equal_duration_data.pkl'...")
         equal_duration_data = load_obj_from_pkl(
@@ -91,6 +154,12 @@ def preprocess_covid_dataframe(
             )
             print("Backup for equal duration data created.")
 
+    return equal_duration_data, segmented_covid_statuses
+
+
+def balance(
+    equal_duration_data, segmented_covid_statuses, pickle_folder, backup_every_stage
+):
     try:
         print("Loading balanced data from 'balanced_data.pkl'...")
         balanced_data, balanced_covid_statuses = load_obj_from_pkl(
@@ -98,21 +167,6 @@ def preprocess_covid_dataframe(
         )
         print("Balanced data loaded.")
     except FileNotFoundError:
-        # ? This is the data augmentation
-        # Append this augmented_data to actual data
-        # balanced_data, balanced_covid_statuses = balance_data(
-        #     equal_duration_data,
-        #     segmented_covid_statuses,
-        #     sampling_rate=sampling_rate,
-        #     pickle_folder=pickle_folder,
-        # )
-
-        # Do undersampling
-        # balanced_data, balanced_covid_statuses = undersample_data(
-        #     audio_datas=equal_duration_data,
-        #     labels=segmented_covid_statuses,
-        #     pivot_label="COVID-19",
-        # )
         print("Balancing data using undersampling...")
         balanced_data, balanced_covid_statuses = RandomUnderSampler(
             sampling_strategy="majority", random_state=42
@@ -127,7 +181,10 @@ def preprocess_covid_dataframe(
                 os.path.join(pickle_folder, "balanced_data.pkl"),
             )
             print("Backup for balanced data created.")
+    return balanced_data, balanced_covid_statuses
 
+
+def extract(balanced_data, sampling_rate, n_fft, hop_length, win_length, pickle_folder):
     # Feature extraction
     try:
         print("Loading features from 'features.pkl'...")
@@ -144,47 +201,7 @@ def preprocess_covid_dataframe(
 
     # TODO: MFCC
 
-    # NOW : returning features in 2D shape and status in 2D shape with one hot encoding fashion
-    res = features, balanced_covid_statuses.reshape(-1, 1)
-
-    # Save to pickle file for the final features
-    print("Saving features...")
-    save_obj_to_pkl(res, os.path.join(pickle_folder, "features.pkl"))
-    print("Features saved.")
-
-    # Should be returning series of data in (-1, 1) shape and the labels in (-1, 1) too
-    return res
-
-
-def balance_data(
-    datas: np.ndarray, labels: np.ndarray, sampling_rate: int = 16000, **kwargs
-):
-    # Data augmentation
-    # NOW : labels should be contains only 2 labels
-    n_aug = get_pos_neg_diff(labels)
-
-    # Data being augmented should contain only COVID-19 audio data
-    covid_data_only = get_covid_data_only(datas, labels)
-
-    # Augment the positive class
-    augmented_data = augment_data(
-        covid_data_only,
-        n_aug=n_aug,
-        sampling_rate=sampling_rate,
-    )
-
-    # IMPORTANT: For testing only, so augmented_data will be pickled
-    save_obj_to_pkl(
-        augmented_data, os.path.join(kwargs["pickle_folder"], "augmented_data.pkl")
-    )
-    augmented_covid_status = np.full(len(augmented_data), "COVID-19")
-
-    # Append this augmented_data to actual data
-    balanced_data, balanced_covid_statuses = np.concatenate(
-        (datas, augmented_data)
-    ), np.concatenate((labels, augmented_covid_status))
-
-    return balanced_data, balanced_covid_statuses
+    return features
 
 
 def save_obj_to_pkl(to_save, file_path):
@@ -195,51 +212,6 @@ def save_obj_to_pkl(to_save, file_path):
 def load_obj_from_pkl(file_path):
     with (open(file_path, "rb")) as f:
         return pkl.load(f)
-
-
-def get_covid_data_only(
-    audio_datas: np.ndarray, status_datas: np.ndarray
-) -> np.ndarray:
-    covid_only_data = []
-    for audio, status in zip(audio_datas, status_datas):
-        if status == "COVID-19":
-            covid_only_data.append(audio)
-
-    return np.array(covid_only_data)
-
-
-def get_pos_neg_diff(status_datas: np.ndarray):
-    # precondition : status datas should be binary
-    _, unique_counts = np.unique(status_datas, return_counts=True)
-
-    return abs(np.diff(unique_counts))[0]
-
-
-def undersample_data(audio_datas: np.ndarray, labels: np.ndarray, pivot_label):
-    n_data_pivot = np.count_nonzero(labels == pivot_label)
-
-    new_datas = []
-    new_labels = []
-    for label in np.unique(labels):
-        # Get the index of the label observed
-        labels_idx = np.argwhere(labels == label).flatten()
-
-        # Pick randomly where idx will be being kept when not pivot_label
-        being_keep_idx = np.random.choice(labels_idx, size=n_data_pivot, replace=False)
-
-        # And then take the correlated data
-        # If not pivot label, based on random chosen data
-        if label != pivot_label:
-            new_data = audio_datas[being_keep_idx]
-        # If pivot label, based on labels_idx
-        else:
-            new_data = audio_datas[labels_idx]
-
-        # Append to the list
-        new_datas.append(new_data)
-        new_labels.append(np.full((n_data_pivot,), fill_value=label))
-
-    return np.concatenate(np.array(new_datas)), np.array(new_labels).flatten()
 
 
 def expand_mel_spec(old_mel_specs: np.ndarray):
