@@ -7,6 +7,7 @@ import pickle as pkl
 import numpy as np
 import pandas as pd
 from keras.utils.np_utils import to_categorical
+from imblearn.under_sampling import RandomUnderSampler
 from src.utils.audio import (
     augment_data,
     convert_audio_to_numpy,
@@ -79,11 +80,14 @@ def preprocess_covid_dataframe(
     # )
 
     # Do undersampling
-    balanced_data, balanced_covid_statuses = undersample_data(
-        audio_datas=equal_duration_data,
-        labels=segmented_covid_statuses,
-        pivot_label="COVID-19",
-    )
+    # balanced_data, balanced_covid_statuses = undersample_data(
+    #     audio_datas=equal_duration_data,
+    #     labels=segmented_covid_statuses,
+    #     pivot_label="COVID-19",
+    # )
+    balanced_data, balanced_covid_statuses = RandomUnderSampler(
+        sampling_strategy="majority", random_state=42
+    ).fit_resample(equal_duration_data, segmented_covid_statuses)
 
     # Backup the balancing data stage
     if backup_every_stage:
