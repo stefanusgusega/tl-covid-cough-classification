@@ -56,7 +56,7 @@ def evaluate_model(model, x, y):
 
     # If instance of Keras Classifier wrapper
     if isinstance(model, KerasClassifier):
-        return model.score(x, y)
+        return model.model_.evaluate(x, y)[1]
 
     # If none of the above conditions, raise Exception
     raise Exception(
