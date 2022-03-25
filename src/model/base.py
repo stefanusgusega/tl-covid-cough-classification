@@ -27,7 +27,7 @@ class BaseModel:
         set_random_seed()
 
     @abstractmethod
-    def build_model(self, metrics):
+    def build_model(self, metrics, n_classes: int):
         ...
 
     def print_summary(self):
