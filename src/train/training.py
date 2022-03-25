@@ -2,12 +2,12 @@
 Trainer module.
 """
 import os
-import pickle as pkl
 import numpy as np
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
 from src.model import ResNet50Model
+from src.utils.chore import generate_now_datetime
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
     evaluate_model,
@@ -184,7 +184,6 @@ class Trainer:
             model=hyperparameter_tune_resnet_model,
             optimizer="adam",
             random_state=42,
-            metrics=tf.keras.metrics.AUC(),
             # This is kwargs
             first_dense_units=[],
             second_dense_units=[],
@@ -203,16 +202,15 @@ class Trainer:
 
         return grid_result.best_estimator_
 
-    def save_optimum_hyperparameter_model(self, folder: str, model, fold_number: int):
+    def save_optimum_hyperparameter_model(
+        self, folder: str, kc_model: KerasClassifier, fold_number: int
+    ):
         """
         Save the optimum hyperparameter model for specified traning folds in specified folder.
         """
         if self.hyperparameter_tuning_args is not None:
             print("Saving the optimum hyperparameter model...")
-            with (
-                open(os.path.join(folder, f"optimum_hp_{fold_number}.pkl"), "wb")
-            ) as model_file:
-                pkl.dump(model, model_file)
+            kc_model.model_.save(os.path.join(folder, generate_now_datetime()))
             print(
                 f"Optimum hyperparameter model saved at {os.path.join(folder, f'optimum_hp_{fold_number}.pkl')}."
             )

@@ -1,12 +1,11 @@
 """
 Model util functions that should not be in one class.
 """
-
-from datetime import datetime
 import os
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
 from src.model.resnet50 import ResNet50Model
+from src.utils.chore import generate_now_datetime
 from src.utils.randomize import set_random_seed
 
 
@@ -70,6 +69,6 @@ def generate_tensorboard_callback(log_dir: str):
     Generate a TensorBoard callback for analysis and visualization needs.
     TensorBoard source : https://www.tensorflow.org/tensorboard/graphs
     """
-    specified_log_dir = os.path.join(log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
+    specified_log_dir = os.path.join(log_dir, generate_now_datetime())
 
     return tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
