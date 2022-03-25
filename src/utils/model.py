@@ -4,6 +4,7 @@ Model util functions that should not be in one class.
 
 from datetime import datetime
 import os
+from sklearn.metrics import roc_auc_score
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
 from src.model.resnet50 import ResNet50Model
@@ -56,7 +57,8 @@ def evaluate_model(model, x, y):
 
     # If instance of Keras Classifier wrapper
     if isinstance(model, KerasClassifier):
-        return model.score(x, y)
+        y_pred = model.predict_proba(x)[:, 1]
+        return roc_auc_score(y, y_pred)
 
     # If none of the above conditions, raise Exception
     raise Exception(
