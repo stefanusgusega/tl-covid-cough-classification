@@ -127,7 +127,7 @@ class Trainer:
                 tb_callback = generate_tensorboard_callback(self.tensorboard_log_dir)
                 additional_callbacks.append(tb_callback)
 
-            model.fit(
+            model.model_.fit(
                 x_folds,
                 y_folds,
                 validation_data=(x_test, y_test),
@@ -173,7 +173,7 @@ class Trainer:
 
     def hyperparameter_tune(
         self, datas: np.ndarray, labels: np.ndarray, n_splits: int = 5
-    ):
+    ) -> tf.keras.Model:
         """
         This is located in deepest loop of nested cross validation.
         Should return the best model.
