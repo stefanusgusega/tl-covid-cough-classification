@@ -165,8 +165,11 @@ def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:
     audio_length_func = np.vectorize(len)
     audio_length_arr = audio_length_func(audio_datas)
 
-    # Set offset value by mean + 2*std
-    offset = round(np.mean(audio_length_arr) + 2 * np.std(audio_length_arr))
+    # Set offset value by higher outlier
+    first_quartile = np.percentile(audio_length_arr, 25)
+    third_quartile = np.percentile(audio_length_arr, 75)
+    iqr = third_quartile - first_quartile
+    offset = round(third_quartile + 1.5 * iqr)
 
     new_audio_datas = []
 
