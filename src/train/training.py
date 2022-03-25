@@ -184,6 +184,7 @@ class Trainer:
             model=hyperparameter_tune_resnet_model,
             optimizer="adam",
             random_state=42,
+            metrics=tf.keras.metrics.AUC(),
             # This is kwargs
             first_dense_units=[],
             second_dense_units=[],
