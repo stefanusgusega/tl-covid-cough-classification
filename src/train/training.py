@@ -198,6 +198,7 @@ class Trainer:
 
         return grid_result.best_estimator_.model_
 
+    # TODO : save as h5 file, maybe add parameter to choose whether save as h5 or not.
     def save_optimum_hyperparameter_model(self, folder: str, model: tf.keras.Model):
         """
         Save the optimum hyperparameter model for specified traning folds in specified folder.
