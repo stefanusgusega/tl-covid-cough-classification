@@ -10,7 +10,6 @@ from src.model import ResNet50Model
 from src.utils.chore import generate_now_datetime
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
-    evaluate_model,
     generate_tensorboard_callback,
     hyperparameter_tune_resnet_model,
 )
@@ -44,8 +43,8 @@ class Trainer:
 
         # Init array to save metrics and losses
         self.test_metrics_arr = []
-        self.val_metrics_arr = []
-        # self.test_losses_arr = []
+        # self.val_metrics_arr = []
+        self.test_losses_arr = []
         # self.val_losses_arr = []
 
         # Init callbacks array
@@ -111,11 +110,8 @@ class Trainer:
             # Else, hyperparameter tune it
             else:
                 model = self.hyperparameter_tune(x_folds, y_folds)
-
-            # Save the optimized model
-            self.save_optimum_hyperparameter_model(
-                hp_model_tuning_folder, model, outer_idx
-            )
+                # Save the optimized model
+                self.save_optimum_hyperparameter_model(hp_model_tuning_folder, model)
 
             # Training for this fold
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
@@ -127,7 +123,7 @@ class Trainer:
                 tb_callback = generate_tensorboard_callback(self.tensorboard_log_dir)
                 additional_callbacks.append(tb_callback)
 
-            model.model_.fit(
+            model.fit(
                 x_folds,
                 y_folds,
                 validation_data=(x_test, y_test),
@@ -138,11 +134,11 @@ class Trainer:
 
             # Evaluate model for outer loop
             print(f"Evaluating model fold {outer_idx + 1}/{n_splits}...")
-            metric = evaluate_model(model=model, x=x_test, y=y_test)
+            loss, metric = model.evaluate(x_test, y_test)
 
             # Save the values for outer loop
             self.test_metrics_arr.append(metric)
-            # self.test_losses_arr.append(loss)
+            self.test_losses_arr.append(loss)
 
     def generate_model(self):
         """
@@ -200,17 +196,14 @@ class Trainer:
         )
         grid_result = grid.fit(datas, labels)
 
-        return grid_result.best_estimator_
+        return grid_result.best_estimator_.model_
 
-    def save_optimum_hyperparameter_model(
-        self, folder: str, kc_model: KerasClassifier, fold_number: int
-    ):
+    def save_optimum_hyperparameter_model(self, folder: str, kc_model: KerasClassifier):
         """
         Save the optimum hyperparameter model for specified traning folds in specified folder.
         """
         if self.hyperparameter_tuning_args is not None:
+            folder_name = os.path.join(folder, generate_now_datetime())
             print("Saving the optimum hyperparameter model...")
-            kc_model.model_.save(os.path.join(folder, generate_now_datetime()))
-            print(
-                f"Optimum hyperparameter model saved at {os.path.join(folder, f'optimum_hp_{fold_number}.pkl')}."
-            )
+            kc_model.model_.save(folder_name)
+            print(f"Optimum hyperparameter model saved at {folder_name}.")
