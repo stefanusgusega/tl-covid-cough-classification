@@ -198,12 +198,12 @@ class Trainer:
 
         return grid_result.best_estimator_.model_
 
-    def save_optimum_hyperparameter_model(self, folder: str, kc_model: KerasClassifier):
+    def save_optimum_hyperparameter_model(self, folder: str, model: tf.keras.Model):
         """
         Save the optimum hyperparameter model for specified traning folds in specified folder.
         """
         if self.hyperparameter_tuning_args is not None:
             folder_name = os.path.join(folder, generate_now_datetime())
             print("Saving the optimum hyperparameter model...")
-            kc_model.model_.save(folder_name)
+            model.save(folder_name)
             print(f"Optimum hyperparameter model saved at {folder_name}.")
