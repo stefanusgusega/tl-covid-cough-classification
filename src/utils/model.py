@@ -3,7 +3,6 @@ Model util functions that should not be in one class.
 """
 import os
 import tensorflow as tf
-from scikeras.wrappers import KerasClassifier
 from src.model.resnet50 import ResNet50Model
 from src.utils.chore import generate_now_datetime
 from src.utils.randomize import set_random_seed
@@ -46,22 +45,6 @@ def hyperparameter_tune_resnet_model(
         metrics=[tf.keras.metrics.AUC()],
     )
     return model
-
-
-def evaluate_model(model, x, y):
-    # If instance of original Keras Model
-    if isinstance(model, tf.keras.Model):
-        return model.evaluate(x, y)[1]
-
-    # If instance of Keras Classifier wrapper
-    if isinstance(model, KerasClassifier):
-        return model.model_.evaluate(x, y)[1]
-
-    # If none of the above conditions, raise Exception
-    raise Exception(
-        "The model should be an instance of either this two: tensorflow.keras.Model "
-        "or scikeras.wrappers.KerasClassifier"
-    )
 
 
 def generate_tensorboard_callback(log_dir: str):
