@@ -9,6 +9,9 @@ import tensorflow as tf
 
 
 def set_random_seed(seed_value: int = 42):
+    # Workaround for
+    os.environ["TF_DISABLE_SEGMENT_REDUCTION_OP_DETERMINISM_EXCEPTIONS"] = "True"
+
     # Configures TensorFlow ops to run deterministically
     tf.config.experimental.enable_op_determinism()
 

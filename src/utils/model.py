@@ -32,9 +32,11 @@ def hyperparameter_tune_resnet_model(
         )
     )
 
+    # TODO: Soon will be deleted, because it will be included in ResNet builder from scratch
     model.add(tf.keras.layers.AveragePooling2D())
     model.add(tf.keras.layers.Flatten())
 
+    # FC layers
     model.add(tf.keras.layers.Dense(first_dense_units, activation="relu"))
     model.add(tf.keras.layers.Dense(second_dense_units, activation="relu"))
     model.add(tf.keras.layers.Dense(2, activation="softmax"))
