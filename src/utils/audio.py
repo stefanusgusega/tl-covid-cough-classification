@@ -11,6 +11,8 @@ from audiomentations import TimeStretch, Gain, Compose
 from scipy import signal
 from tqdm import tqdm
 
+AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg"]
+
 
 def generate_cough_segments(
     x,
@@ -91,7 +93,7 @@ def convert_audio_to_numpy(
     sampling_rate: int = 16000,
     filename_colname: str = "uuid",
     ext_colname: str = "ext",
-    covid_status_colname: str = "status",
+    label_colname: str = "status",
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     samples = []
@@ -100,13 +102,18 @@ def convert_audio_to_numpy(
     print("Converting audio to numpy array...")
 
     for _, row in tqdm(df.iterrows(), total=len(df)):
-        filename = row[filename_colname] + row[ext_colname]
+        # Check if the filename already including extension. If yes, then use it instead.
+        if row[filename_colname].split(".")[-1] in AUDIO_EXTENSIONS:
+            filename = row[filename_colname]
+        else:
+            filename = row[filename_colname] + row[ext_colname]
+
         # Sampling rate is not returned because it will make worse memory usage
         audio_data, _ = librosa.load(
             os.path.join(audio_folder_path, filename), sr=sampling_rate
         )
         samples.append(audio_data)
-        statuses.append(row[covid_status_colname])
+        statuses.append(row[label_colname])
 
     return np.array(samples), np.array(statuses)
 
