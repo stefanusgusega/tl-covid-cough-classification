@@ -25,6 +25,8 @@ class ResNet50Model(BaseModel):
         self.model_type = "resnet50"
 
     def build_model(self, metrics=None, n_classes: int = 2):
+        # TODO : Should construct resnet from scratch.
+        # Source: https://www.kaggle.com/code/sandy1112/create-and-train-resnet50-from-scratch
         if metrics is None:
             metrics = [tf.keras.metrics.AUC()]
 
