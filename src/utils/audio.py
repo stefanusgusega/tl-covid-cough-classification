@@ -130,22 +130,22 @@ def segment_cough_and_label(
 
 
 def generate_segmented_data(
-    samples_data: np.ndarray, covid_status_data: np.ndarray, sampling_rate: int = 16000
+    samples_data: np.ndarray, audio_labels: np.ndarray, sampling_rate: int = 16000
 ) -> Tuple[np.ndarray, np.ndarray]:
 
-    if len(samples_data) != len(covid_status_data):
+    if len(samples_data) != len(audio_labels):
         raise Exception(
-            f"The length of the samples data and covid status data is not same. "
-            f"{len(samples_data)} != {len(covid_status_data)}"
+            f"The length of the samples data and the labels is not same. "
+            f"{len(samples_data)} != {len(audio_labels)}"
         )
 
     new_data = []
-    statuses_data = []
+    labels_data = []
 
     print("Segmenting audio data...")
 
     for data, status_data in tqdm(
-        zip(samples_data, covid_status_data), total=len(samples_data)
+        zip(samples_data, audio_labels), total=len(samples_data)
     ):
         segments, labels = segment_cough_and_label(
             data, status_data, sampling_rate=sampling_rate
@@ -154,12 +154,12 @@ def generate_segmented_data(
         for segment in segments:
             new_data.append(segment)
 
-        # Append covid status data
-        statuses_data.append(labels)
+        # Append the segmented labels
+        labels_data.append(labels)
 
-    statuses_data = np.array(statuses_data)
+    labels_data = np.array(labels_data)
 
-    return np.array(new_data), np.concatenate(statuses_data)
+    return np.array(new_data), np.concatenate(labels_data)
 
 
 def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:

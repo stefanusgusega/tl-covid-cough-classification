@@ -16,192 +16,212 @@ from src.utils.audio import (
 )
 
 
-def preprocess_covid_dataframe(
-    df: pd.DataFrame,
-    audio_folder_path: str,
-    sampling_rate: int = 16000,
-    n_fft: int = 2048,
-    hop_length: int = 512,
-    win_length: int = None,
-    backup_every_stage=True,
-    pickle_folder=None,
-) -> Tuple[np.ndarray, np.ndarray]:
+class Preprocessor:
+    """
+    This is the parent class of all preprocessor.
+    """
 
-    if backup_every_stage:
-        # Check if the folder is specified, if not so raise an exception
-        if pickle_folder is None:
-            raise Exception(
-                "Please specify the path that you wish to dump the results of this conversion."
-            )
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        audio_folder_path: str,
+        backup_every_stage=True,
+        pickle_folder=None,
+    ) -> None:
+        self.df = df
+        self.audio_folder_path = audio_folder_path
+        self.backup_every_stage = backup_every_stage
+        self.pickle_folder = pickle_folder
 
-    numpy_data, covid_statuses = convert(
-        df=df,
-        audio_folder_path=audio_folder_path,
-        sampling_rate=sampling_rate,
-        pickle_folder=pickle_folder,
-        backup_every_stage=backup_every_stage,
-    )
-
-    segmented_data, segmented_covid_statuses = segment(
-        numpy_data=numpy_data,
-        covid_statuses=covid_statuses,
-        sampling_rate=sampling_rate,
-        pickle_folder=pickle_folder,
-        backup_every_stage=backup_every_stage,
-    )
-
-    equal_duration_data, segmented_covid_statuses = equalize(
-        segmented_data=segmented_data,
-        segmented_covid_statuses=segmented_covid_statuses,
-        pickle_folder=pickle_folder,
-        backup_every_stage=backup_every_stage,
-    )
-
-    balanced_data, balanced_covid_statuses = balance(
-        equal_duration_data=equal_duration_data,
-        segmented_covid_statuses=segmented_covid_statuses,
-        pickle_folder=pickle_folder,
-        backup_every_stage=backup_every_stage,
-    )
-
-    features = extract(
-        balanced_data=balanced_data,
-        sampling_rate=sampling_rate,
-        n_fft=n_fft,
-        hop_length=hop_length,
-        win_length=win_length,
-        pickle_folder=pickle_folder,
-    )
-
-    # NOW : returning features in 2D shape and status in 2D shape with one hot encoding fashion
-    res = features, balanced_covid_statuses.reshape(-1, 1)
-
-    # Save to pickle file for the final features
-    print("Saving features...")
-    save_obj_to_pkl(res, os.path.join(pickle_folder, "features.pkl"))
-    print("Features saved.")
-
-    # Should be returning series of data in (-1, 1) shape and the labels in (-1, 1) too
-    return res
-
-
-def convert(df, audio_folder_path, sampling_rate, pickle_folder, backup_every_stage):
-    try:
-        print("Loading numpy data from 'numpy_data.pkl'...")
-        numpy_data, covid_statuses = load_obj_from_pkl(
-            os.path.join(pickle_folder, "numpy_data.pkl")
-        )
-        print("Numpy data loaded.")
-    except FileNotFoundError:
-        numpy_data, covid_statuses = convert_audio_to_numpy(
-            df, audio_folder_path=audio_folder_path, sampling_rate=sampling_rate
-        )
+        self.current_data = None
+        self.current_labels = None
+        self.current_state = "initialized"
 
         if backup_every_stage:
-            print("Creating backup for numpy data...")
-            save_obj_to_pkl(
-                (numpy_data, covid_statuses),
-                os.path.join(pickle_folder, "numpy_data.pkl"),
+            # Check if the folder is specified, if not so raise an exception
+            if pickle_folder is None:
+                raise Exception(
+                    "Please specify the path that you wish to dump the results of this conversion."
+                )
+
+    def convert_to_numpy(self, sampling_rate: int = 16000):
+        assert self.current_state == "initialized"
+
+        try:
+            print("Loading numpy data from 'numpy_data.pkl'...")
+            numpy_data, labels = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "numpy_data.pkl")
             )
-            print("Backup for numpy data created.")
-
-    return numpy_data, covid_statuses
-
-
-def segment(
-    numpy_data, covid_statuses, sampling_rate, pickle_folder, backup_every_stage
-):
-    try:
-        print("Loading segmented data from 'segmented_data.pkl'...")
-        segmented_data, segmented_covid_statuses = load_obj_from_pkl(
-            os.path.join(pickle_folder, "segmented_data.pkl")
-        )
-        print("Segmented data loaded.")
-    except FileNotFoundError:
-        segmented_data, segmented_covid_statuses = generate_segmented_data(
-            numpy_data, covid_statuses, sampling_rate=sampling_rate
-        )
-
-        if backup_every_stage:
-            print("Creating backup for segmented data...")
-            save_obj_to_pkl(
-                (segmented_data, segmented_covid_statuses),
-                os.path.join(pickle_folder, "segmented_data.pkl"),
+            print("Numpy data loaded.")
+        except FileNotFoundError:
+            numpy_data, labels = convert_audio_to_numpy(
+                self.df,
+                audio_folder_path=self.audio_folder_path,
+                sampling_rate=sampling_rate,
             )
-            print("Backup for segmented data created.")
 
-    return segmented_data, segmented_covid_statuses
+            if self.backup_every_stage:
+                print("Creating backup for numpy data...")
+                save_obj_to_pkl(
+                    (numpy_data, labels),
+                    os.path.join(self.pickle_folder, "numpy_data.pkl"),
+                )
+                print("Backup for numpy data created.")
 
+        # Update state
+        self.current_data = numpy_data
+        self.current_labels = labels
+        self.current_state = "converted"
 
-def equalize(
-    segmented_data, segmented_covid_statuses, pickle_folder, backup_every_stage
-):
-    # Equalize the data duration, the data should be produced from segmentation
-    try:
-        print("Loading equal duration data from 'equal_duration_data.pkl'...")
-        equal_duration_data = load_obj_from_pkl(
-            os.path.join(pickle_folder, "equal_duration_data.pkl")
-        )[0]
-        print("Equal duration data loaded.")
-    except FileNotFoundError:
-        equal_duration_data = equalize_audio_duration(segmented_data)
+        return self.current_data, self.current_labels
 
-        if backup_every_stage:
-            print("Creating backup for equal duration data...")
-            save_obj_to_pkl(
-                (equal_duration_data, segmented_covid_statuses),
-                os.path.join(pickle_folder, "equal_duration_data.pkl"),
+    def segment_audio(self, sampling_rate: int = 16000):
+        assert self.current_state == "converted"
+
+        try:
+            print("Loading segmented data from 'segmented_data.pkl'...")
+            segmented_data, segmented_labels = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "segmented_data.pkl")
             )
-            print("Backup for equal duration data created.")
-
-    return equal_duration_data, segmented_covid_statuses
-
-
-def balance(
-    equal_duration_data, segmented_covid_statuses, pickle_folder, backup_every_stage
-):
-    try:
-        print("Loading balanced data from 'balanced_data.pkl'...")
-        balanced_data, balanced_covid_statuses = load_obj_from_pkl(
-            os.path.join(pickle_folder, "balanced_data.pkl")
-        )
-        print("Balanced data loaded.")
-    except FileNotFoundError:
-        print("Balancing data using undersampling...")
-        balanced_data, balanced_covid_statuses = RandomUnderSampler(
-            sampling_strategy="majority", random_state=42
-        ).fit_resample(equal_duration_data, segmented_covid_statuses)
-        print("Data balanced.")
-
-        # Backup the balancing data stage
-        if backup_every_stage:
-            print("Creating backup for balanced data...")
-            save_obj_to_pkl(
-                (balanced_data, balanced_covid_statuses),
-                os.path.join(pickle_folder, "balanced_data.pkl"),
+            print("Segmented data loaded.")
+        except FileNotFoundError:
+            segmented_data, segmented_labels = generate_segmented_data(
+                self.current_data, self.current_labels, sampling_rate=sampling_rate
             )
-            print("Backup for balanced data created.")
-    return balanced_data, balanced_covid_statuses
 
+            if self.backup_every_stage:
+                print("Creating backup for segmented data...")
+                save_obj_to_pkl(
+                    (segmented_data, segmented_labels),
+                    os.path.join(self.pickle_folder, "segmented_data.pkl"),
+                )
+                print("Backup for segmented data created.")
 
-def extract(balanced_data, sampling_rate, n_fft, hop_length, win_length, pickle_folder):
-    # Feature extraction
-    try:
-        print("Loading features from 'features.pkl'...")
-        features = load_obj_from_pkl(os.path.join(pickle_folder, "features.pkl"))[0]
-        print("Features loaded.")
-    except FileNotFoundError:
-        features = extract_melspec(
-            balanced_data,
+        # Update data, labels, and state
+        self.current_data = segmented_data
+        self.current_labels = segmented_labels
+        self.current_state = "segmented"
+
+        return segmented_data, segmented_labels
+
+    def equalize_duration(self):
+        # Equalize the data duration, the data should be produced from segmentation
+        assert self.current_state == "segmented"
+
+        try:
+            print("Loading equal duration data from 'equal_duration_data.pkl'...")
+            equal_duration_data = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "equal_duration_data.pkl")
+            )[0]
+            print("Equal duration data loaded.")
+        except FileNotFoundError:
+            equal_duration_data = equalize_audio_duration(self.current_data)
+
+            if self.backup_every_stage:
+                print("Creating backup for equal duration data...")
+                save_obj_to_pkl(
+                    (equal_duration_data, self.current_labels),
+                    os.path.join(self.pickle_folder, "equal_duration_data.pkl"),
+                )
+                print("Backup for equal duration data created.")
+
+        # Update the data and state
+        self.current_data = equal_duration_data
+        self.current_state = "equalized"
+
+        return equal_duration_data, self.current_labels
+
+    def balance(self):
+        assert self.current_state == "equalized"
+
+        try:
+            print("Loading balanced data from 'balanced_data.pkl'...")
+            balanced_data, balanced_labels = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "balanced_data.pkl")
+            )
+            print("Balanced data loaded.")
+        except FileNotFoundError:
+            print("Balancing data using undersampling...")
+            balanced_data, balanced_labels = RandomUnderSampler(
+                sampling_strategy="majority", random_state=42
+            ).fit_resample(self.current_data, self.current_labels)
+            print("Data balanced.")
+
+            # Backup the balancing data stage
+            if self.backup_every_stage:
+                print("Creating backup for balanced data...")
+                save_obj_to_pkl(
+                    (balanced_data, balanced_labels),
+                    os.path.join(self.pickle_folder, "balanced_data.pkl"),
+                )
+                print("Backup for balanced data created.")
+
+        # Update the data, labels, and states
+        self.current_data = balanced_data
+        self.current_labels = balanced_labels
+        self.current_state = "balanced"
+
+        return balanced_data, balanced_labels
+
+    def extract(
+        self,
+        sampling_rate: int = 16000,
+        n_fft: int = 2048,
+        hop_length: int = 512,
+        win_length: int = None,
+    ):
+        # Feature extraction
+        assert self.current_state == "balanced"
+        try:
+            print("Loading features from 'features.pkl'...")
+            features = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "features.pkl")
+            )[0]
+            print("Features loaded.")
+        except FileNotFoundError:
+            features = extract_melspec(
+                self.current_data,
+                sampling_rate=sampling_rate,
+                n_fft=n_fft,
+                hop_length=hop_length,
+                win_length=win_length,
+            )
+
+        # TODO: MFCC
+
+        res = features, self.current_labels.reshape(-1, 1)
+
+        # Save to pickle file for the final features
+        print("Saving features...")
+        save_obj_to_pkl(res, os.path.join(self.pickle_folder, "features.pkl"))
+        print("Features saved.")
+
+        # Update data and state
+        self.current_data, self.current_labels = res
+        self.current_state = "extracted"
+
+        return res
+
+    def run(
+        self,
+        sampling_rate: int = 16000,
+        n_fft: int = 2048,
+        hop_length: int = 512,
+        win_length: int = None,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        self.convert_to_numpy(sampling_rate=sampling_rate)
+        self.segment_audio(sampling_rate=sampling_rate)
+        self.equalize_duration()
+        self.balance()
+        self.extract(
             sampling_rate=sampling_rate,
             n_fft=n_fft,
             hop_length=hop_length,
             win_length=win_length,
         )
 
-    # TODO: MFCC
-
-    return features
+        # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
+        return self.current_data, self.current_labels
 
 
 def save_obj_to_pkl(to_save, file_path):
