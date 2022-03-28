@@ -24,11 +24,15 @@ class Preprocessor:
     def __init__(
         self,
         df: pd.DataFrame,
+        filename_colname: str,
+        label_colname: str,
         audio_folder_path: str,
         backup_every_stage=True,
         pickle_folder=None,
     ) -> None:
         self.df = df
+        self.filename_colname = filename_colname
+        self.label_colname = label_colname
         self.audio_folder_path = audio_folder_path
         self.backup_every_stage = backup_every_stage
         self.pickle_folder = pickle_folder
@@ -58,6 +62,8 @@ class Preprocessor:
                 self.df,
                 audio_folder_path=self.audio_folder_path,
                 sampling_rate=sampling_rate,
+                filename_colname=self.filename_colname,
+                label_colname=self.label_colname,
             )
 
             if self.backup_every_stage:
