@@ -15,6 +15,38 @@ from src.utils.audio import (
     generate_segmented_data,
 )
 
+# Non-class Utils
+
+
+def save_obj_to_pkl(to_save, file_path):
+    with (open(file_path, "wb")) as f:
+        pkl.dump(to_save, f)
+
+
+def load_obj_from_pkl(file_path):
+    with (open(file_path, "rb")) as f:
+        return pkl.load(f)
+
+
+def expand_mel_spec(old_mel_specs: np.ndarray):
+    new_mel_specs = []
+
+    for mel_spec in old_mel_specs:
+        new_mel_spec = np.expand_dims(mel_spec, -1)
+        new_mel_specs.append(new_mel_spec)
+
+    return np.array(new_mel_specs)
+
+
+def encode_label(labels: np.ndarray, pos_label: str = None):
+    # If binary, encode it according to positive label and negative label first
+    if len(np.unique(labels)) == 2:
+        if pos_label is None:
+            raise Exception("Please specify which is the positive label")
+        labels = np.where(labels == pos_label, 1, 0).reshape(-1, 1)
+
+    return to_categorical(labels)
+
 
 class Preprocessor:
     """
@@ -230,31 +262,9 @@ class Preprocessor:
         return self.current_data, self.current_labels
 
 
-def save_obj_to_pkl(to_save, file_path):
-    with (open(file_path, "wb")) as f:
-        pkl.dump(to_save, f)
+class FreeSoundPreprocessor(Preprocessor):
+    """
+    This is the class to preprocess FreeSound Dataset
+    """
 
-
-def load_obj_from_pkl(file_path):
-    with (open(file_path, "rb")) as f:
-        return pkl.load(f)
-
-
-def expand_mel_spec(old_mel_specs: np.ndarray):
-    new_mel_specs = []
-
-    for mel_spec in old_mel_specs:
-        new_mel_spec = np.expand_dims(mel_spec, -1)
-        new_mel_specs.append(new_mel_spec)
-
-    return np.array(new_mel_specs)
-
-
-def encode_label(labels: np.ndarray, pos_label: str = None):
-    # If binary, encode it according to positive label and negative label first
-    if len(np.unique(labels)) == 2:
-        if pos_label is None:
-            raise Exception("Please specify which is the positive label")
-        labels = np.where(labels == pos_label, 1, 0).reshape(-1, 1)
-
-    return to_categorical(labels)
+    ...
