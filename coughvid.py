@@ -15,6 +15,7 @@ print(features[0].shape)
 
 model_args = {"input_shape": (features[0].shape[1], features[0].shape[2], 1)}
 
+# TODO : HP Tuning doesn't work
 hp_args = {
     # "first_dense_units" : [2**i for i in range(8,10)],
     "first_dense_units": [2**8],
@@ -29,11 +30,10 @@ trainer = Trainer(
     audio_labels=features[1],
     model_args=model_args,
     tensorboard_log_dir=LOG_PATH,
-    # hyperparameter_tuning_args=hp_args,
+    hyperparameter_tuning_args=hp_args,
 )
 # trainer.set_tensorboard_callback(log_dir=LOG_PATH)
 trainer.train(
-    epochs=2,
-    # hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
+    epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
 )
 # trainer.train(epochs=10)
