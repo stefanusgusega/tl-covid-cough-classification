@@ -94,7 +94,12 @@ def convert_audio_to_numpy(
     filename_colname: str = "uuid",
     ext_colname: str = "ext",
     label_colname: str = "status",
+    segment: bool = False,
+    segment_args: dict = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    If segment, please specify on ```segment_args``` the ```start_colname``` and ```end_colname```.
+    """
 
     samples = []
     statuses = []
@@ -112,7 +117,14 @@ def convert_audio_to_numpy(
         audio_data, _ = librosa.load(
             os.path.join(audio_folder_path, filename), sr=sampling_rate
         )
-        samples.append(audio_data)
+
+        # If directly segment, then should know the start sample and end sample as stated on df
+        if segment:
+            start_sample = sampling_rate * row[segment_args["start_colname"]]
+            end_sample = sampling_rate * row[segment_args["end_colname"]]
+            samples.append(audio_data[start_sample : end_sample + 1])
+        else:
+            samples.append(audio_data)
         statuses.append(row[label_colname])
 
     return np.array(samples), np.array(statuses)
@@ -130,7 +142,9 @@ def segment_cough_and_label(
 
 
 def generate_segmented_data(
-    samples_data: np.ndarray, audio_labels: np.ndarray, sampling_rate: int = 16000
+    samples_data: np.ndarray,
+    audio_labels: np.ndarray,
+    sampling_rate: int = 16000,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     if len(samples_data) != len(audio_labels):
