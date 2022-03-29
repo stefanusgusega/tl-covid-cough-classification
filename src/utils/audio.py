@@ -120,8 +120,8 @@ def convert_audio_to_numpy(
 
         # If directly segment, then should know the start sample and end sample as stated on df
         if segment:
-            start_sample = sampling_rate * row[segment_args["start_colname"]]
-            end_sample = sampling_rate * row[segment_args["end_colname"]]
+            start_sample = round(sampling_rate * row[segment_args["start_colname"]])
+            end_sample = round(sampling_rate * row[segment_args["end_colname"]])
             samples.append(audio_data[start_sample : end_sample + 1])
         else:
             samples.append(audio_data)
