@@ -57,7 +57,3 @@ class ResNet50Model(BaseModel):
         )
 
         return self.model
-
-    # TODO : define identity block, conv block, and then integrate to ResNet
-    def identity_block(self):
-        ...
