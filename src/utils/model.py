@@ -2,6 +2,7 @@
 Model util functions that should not be in one class.
 """
 import os
+from typing import Tuple
 import tensorflow as tf
 from src.model.resnet50 import ResNet50Model
 from src.utils.chore import generate_now_datetime
@@ -190,5 +191,75 @@ def convolutional_block(
     # Final step: Add shortcut value to main path, and pass it through RELU activation
     model = tf.keras.layers.Add()([model, shortcut])
     model = tf.keras.layers.Activation("relu")(model)
+
+    return model
+
+
+def resnet50_block(input_shape: Tuple[int, int, int]):
+    # Define the input as a tensor
+    input_tensor = tf.keras.layers.Input(input_shape)
+
+    # Zero padding
+    model = tf.keras.layers.ZeroPadding2D((3, 3))(input_tensor)
+
+    # conv1
+    model = tf.keras.layers.Conv2D(
+        64, (7, 7), strides=(2, 2), name="conv1", kernel_initializer="glorot_uniform"
+    )(model)
+    model = tf.keras.layers.BatchNormalization(axis=3, name="bn_conv1")(model)
+
+    # conv2
+    # Started with max pool to downsample the size
+    model = tf.keras.layers.MaxPooling2D((3, 3), strides=(2, 2))(model)
+    # All constructed by identity blocks because previously has been pooled
+    for block in ["a", "b", "c"]:
+        model = identity_block(
+            model, middle_kernel_size=3, filters=[64, 64, 256], stage=2, block=block
+        )
+
+    # conv3
+    model = convolutional_block(
+        model,
+        middle_kernel_size=3,
+        filters=[128, 128, 512],
+        stage=3,
+        block="a",
+        stride=2,
+    )
+    # Remaining identity blocks
+    for block in ["b", "c", "d"]:
+        model = identity_block(
+            model, middle_kernel_size=3, filters=[128, 128, 512], stage=2, block=block
+        )
+
+    # conv4
+    model = convolutional_block(
+        model,
+        middle_kernel_size=3,
+        filters=[256, 256, 1024],
+        stage=4,
+        block="a",
+        stride=2,
+    )
+    # Remaining identity blocks
+    for block in ["b", "c", "d", "e", "f"]:
+        model = identity_block(
+            model, middle_kernel_size=3, filters=[256, 256, 1024], stage=4, block=block
+        )
+
+    # conv5
+    model = convolutional_block(
+        model,
+        middle_kernel_size=3,
+        filters=[512, 512, 2048],
+        stage=5,
+        block="a",
+        stride=2,
+    )
+    # Remaining identity blocks
+    for block in ["b", "c"]:
+        model = identity_block(
+            model, middle_kernel_size=3, filters=[512, 512, 2048], stage=5, block=block
+        )
 
     return model
