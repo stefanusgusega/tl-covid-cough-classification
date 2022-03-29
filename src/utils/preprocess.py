@@ -268,3 +268,85 @@ class FreeSoundPreprocessor(Preprocessor):
     """
 
     ...
+
+
+class FluSensePreprocessor(Preprocessor):
+    """
+    This is the class to preprocess FluSense Dataset
+    """
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        filename_colname: str,
+        label_colname: str,
+        audio_folder_path: str,
+        backup_every_stage=True,
+        pickle_folder=None,
+        **kwargs
+    ) -> None:
+        super().__init__(
+            df,
+            filename_colname,
+            label_colname,
+            audio_folder_path,
+            backup_every_stage,
+            pickle_folder,
+        )
+
+        self.kwargs = kwargs
+
+    def convert_to_numpy(self, sampling_rate: int = 16000):
+        assert self.current_state == "initialized"
+
+        try:
+            print("Loading numpy data from 'numpy_data.pkl'...")
+            numpy_data, labels = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "numpy_data.pkl")
+            )
+            print("Numpy data loaded.")
+        except FileNotFoundError:
+            numpy_data, labels = convert_audio_to_numpy(
+                self.df,
+                audio_folder_path=self.audio_folder_path,
+                sampling_rate=sampling_rate,
+                filename_colname=self.filename_colname,
+                label_colname=self.label_colname,
+                **self.kwargs
+            )
+
+            if self.backup_every_stage:
+                print("Creating backup for numpy data...")
+                save_obj_to_pkl(
+                    (numpy_data, labels),
+                    os.path.join(self.pickle_folder, "numpy_data.pkl"),
+                )
+                print("Backup for numpy data created.")
+
+        # Update state
+        self.current_data = numpy_data
+        self.current_labels = labels
+        # Directly change state to segmented
+        self.current_state = "segmented"
+
+        return self.current_data, self.current_labels
+
+    def run(
+        self,
+        sampling_rate: int = 16000,
+        n_fft: int = 2048,
+        hop_length: int = 512,
+        win_length: int = None,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        self.convert_to_numpy(sampling_rate=sampling_rate)
+        self.equalize_duration()
+        self.balance()
+        self.extract(
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+        )
+
+        # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
+        return self.current_data, self.current_labels
