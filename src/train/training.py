@@ -179,7 +179,6 @@ class Trainer:
         model = KerasClassifier(
             model=hyperparameter_tune_resnet_model,
             optimizer="adam",
-            random_state=42,
             # This is kwargs
             first_dense_units=[],
             second_dense_units=[],
@@ -190,7 +189,7 @@ class Trainer:
         grid = GridSearchCV(
             estimator=model,
             param_grid=self.hyperparameter_tuning_args,
-            scoring="roc_auc",
+            # scoring="roc_auc",
             cv=n_splits,
             verbose=1,
         )
