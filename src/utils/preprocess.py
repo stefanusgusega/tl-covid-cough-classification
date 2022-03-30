@@ -49,7 +49,7 @@ class Preprocessor:
         filename_colname: str,
         label_colname: str,
         audio_folder_path: str,
-        start_index: dict = None,
+        checkpoints: dict = None,
         backup_every_stage=True,
         pickle_folder=None,
         **kwargs
@@ -65,15 +65,15 @@ class Preprocessor:
         self.current_labels = None
         self.current_state = "initialized"
 
-        if start_index is None or set(start_index.keys()) != set(
+        if checkpoints is None or set(checkpoints.keys()) != set(
             [
                 "numpy_data",
                 "segment",
             ]
         ):
-            start_index = dict(numpy_data=0, segment=0)
+            checkpoints = dict(numpy_data=None, segment=None)
 
-        self.start_index = start_index
+        self.checkpoints = checkpoints
         self.kwargs = kwargs
 
         if backup_every_stage:
@@ -102,7 +102,7 @@ class Preprocessor:
                     filename_colname=self.filename_colname,
                     label_colname=self.label_colname,
                     ext_colname="ext",
-                    start_index=self.start_index["numpy_data"],
+                    checkpoint=self.checkpoints["numpy_data"],
                 ),
                 **self.kwargs
             )

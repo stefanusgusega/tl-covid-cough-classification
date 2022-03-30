@@ -92,6 +92,7 @@ def convert_audio_to_numpy(
     df: pd.DataFrame,
     audio_folder_path: str,
     checkpoint_folder_path: str,
+    checkpoint: dict = None,
     sampling_rate: int = 16000,
     df_args: dict = None,
     segment: bool = False,
@@ -101,27 +102,30 @@ def convert_audio_to_numpy(
     If segment, please specify on ```segment_args``` the ```start_colname``` and ```end_colname```.
     """
 
-    df_args_keys = set(
-        ["filename_colname", "ext_colname", "label_colname", "start_index"]
-    )
-
-    # If df_args didn't specified or the keys are incomplete,
+    # If df_args is't specified or the keys are incomplete,
     # then use this defaults
-    if df_args is None or set(df_args.keys()) != df_args_keys:
+    if df_args is None or set(df_args.keys()) != set(
+        ["filename_colname", "ext_colname", "label_colname"]
+    ):
         df_args = dict(
             filename_colname="uuid",
             ext_colname="ext",
             label_colname="status",
-            start_index=0,
         )
 
-    df = df[df_args["start_index"] + 1 :]
+    # Check if checkpoint is isn't specified or the keys are incomplete,
+    # Apply defaults
+    if checkpoint is None or set(checkpoint.keys()) != set(
+        ["datas", "labels", "last_index"]
+    ):
+        checkpoint = dict(datas=[], labels=[], last_index=-1)
+
+    df = df[checkpoint["last_index"] + 1 :]
+    samples = checkpoint["datas"]
+    statuses = checkpoint["labels"]
 
     # Create new folder to save checkpoint
     specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data_ckpt")
-
-    samples = []
-    statuses = []
 
     print("Converting audio to numpy array...")
 
