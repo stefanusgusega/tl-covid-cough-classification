@@ -3,7 +3,6 @@ Data preprocessing util functions
 """
 import os
 from typing import Tuple
-import pickle as pkl
 import numpy as np
 import pandas as pd
 from keras.utils.np_utils import to_categorical
@@ -14,18 +13,9 @@ from src.utils.audio import (
     extract_melspec,
     generate_segmented_data,
 )
+from src.utils.chore import load_obj_from_pkl, save_obj_to_pkl
 
 # Non-class Utils
-
-
-def save_obj_to_pkl(to_save, file_path):
-    with (open(file_path, "wb")) as f:
-        pkl.dump(to_save, f)
-
-
-def load_obj_from_pkl(file_path):
-    with (open(file_path, "rb")) as f:
-        return pkl.load(f)
 
 
 def expand_mel_spec(old_mel_specs: np.ndarray):
