@@ -49,6 +49,7 @@ class Preprocessor:
         filename_colname: str,
         label_colname: str,
         audio_folder_path: str,
+        start_index: dict = None,
         backup_every_stage=True,
         pickle_folder=None,
         **kwargs
@@ -64,6 +65,13 @@ class Preprocessor:
         self.current_labels = None
         self.current_state = "initialized"
 
+        if start_index is None or list(start_index.keys()) != [
+            "numpy_data",
+            "segment",
+        ]:
+            start_index = dict(numpy_data=0, segment=0)
+
+        self.start_index = start_index
         self.kwargs = kwargs
 
         if backup_every_stage:
@@ -91,6 +99,8 @@ class Preprocessor:
                 df_args=dict(
                     filename_colname=self.filename_colname,
                     label_colname=self.label_colname,
+                    ext_colname="ext",
+                    start_index=self.start_index["numpy_data"],
                 ),
                 **self.kwargs
             )
