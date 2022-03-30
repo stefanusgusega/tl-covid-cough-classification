@@ -10,6 +10,9 @@ import librosa
 from audiomentations import TimeStretch, Gain, Compose
 from scipy import signal
 from tqdm import tqdm
+from src.utils.chore import generate_now_datetime
+
+from src.utils.preprocess import save_obj_to_pkl
 
 AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg"]
 
@@ -90,10 +93,9 @@ def generate_cough_segments(
 def convert_audio_to_numpy(
     df: pd.DataFrame,
     audio_folder_path: str,
+    checkpoint_folder_path: str,
     sampling_rate: int = 16000,
-    filename_colname: str = "uuid",
-    ext_colname: str = "ext",
-    label_colname: str = "status",
+    df_args: dict = None,
     segment: bool = False,
     segment_args: dict = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -101,17 +103,22 @@ def convert_audio_to_numpy(
     If segment, please specify on ```segment_args``` the ```start_colname``` and ```end_colname```.
     """
 
+    if df_args is None:
+        df_args = dict(
+            filename_colname="uuid", ext_colname="ext", label_colname="status"
+        )
+
     samples = []
     statuses = []
 
     print("Converting audio to numpy array...")
 
-    for _, row in tqdm(df.iterrows(), total=len(df)):
+    for idx, row in tqdm(df.iterrows(), total=len(df)):
         # Check if the filename already including extension. If yes, then use it instead.
-        if row[filename_colname].split(".")[-1] in AUDIO_EXTENSIONS:
-            filename = row[filename_colname]
+        if row[df_args["filename_colname"]].split(".")[-1] in AUDIO_EXTENSIONS:
+            filename = row[df_args["filename_colname"]]
         else:
-            filename = row[filename_colname] + row[ext_colname]
+            filename = row[df_args["filename_colname"]] + row[df_args["ext_colname"]]
 
         # Sampling rate is not returned because it will make worse memory usage
         audio_data, _ = librosa.load(
@@ -125,7 +132,16 @@ def convert_audio_to_numpy(
             samples.append(audio_data[start_sample : end_sample + 1])
         else:
             samples.append(audio_data)
-        statuses.append(row[label_colname])
+        statuses.append(row[df_args["label_colname"]])
+
+        # Save the backup
+        save_obj_to_pkl(
+            (np.array(samples), np.array(statuses), idx),
+            os.path.join(
+                checkpoint_folder_path,
+                f"numpy_data_{generate_now_datetime}/numpy_data.pkl",
+            ),
+        )
 
     return np.array(samples), np.array(statuses)
 
