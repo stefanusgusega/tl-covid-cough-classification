@@ -102,8 +102,8 @@ class Preprocessor:
                     filename_colname=self.filename_colname,
                     label_colname=self.label_colname,
                     ext_colname="ext",
-                    checkpoint=self.checkpoints["numpy_data"],
                 ),
+                checkpoint=self.checkpoints["numpy_data"],
                 **self.kwargs
             )
 
