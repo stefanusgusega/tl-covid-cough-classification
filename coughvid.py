@@ -30,10 +30,10 @@ trainer = Trainer(
     audio_labels=features[1],
     model_args=model_args,
     tensorboard_log_dir=LOG_PATH,
-    hyperparameter_tuning_args=hp_args,
+    # hyperparameter_tuning_args=hp_args,
 )
 # trainer.set_tensorboard_callback(log_dir=LOG_PATH)
-trainer.train(
-    epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
-)
-# trainer.train(epochs=10)
+# trainer.train(
+#     epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
+# )
+trainer.train(epochs=2)
