@@ -101,8 +101,11 @@ def convert_audio_to_numpy(
     If segment, please specify on ```segment_args``` the ```start_colname``` and ```end_colname```.
     """
 
-    # If df_args didn't specified, then use this defaults
-    if df_args is None:
+    df_args_keys = ["filename_colname", "ext_colname", "label_colname", "start_index"]
+
+    # If df_args didn't specified or the keys are incomplete,
+    # then use this defaults
+    if df_args is None or list(df_args.keys()) != df_args_keys:
         df_args = dict(
             filename_colname="uuid",
             ext_colname="ext",
@@ -110,12 +113,7 @@ def convert_audio_to_numpy(
             start_index=0,
         )
 
-    # Access from the starting index added by 1
-    try:
-        df = df[df_args["start_index"] + 1 :]
-    # If the 'start_index' key didn't specified, assume the df starts from beginning
-    except KeyError:
-        pass
+    df = df[df_args["start_index"] + 1 :]
 
     # Create new folder to save checkpoint
     specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data_ckpt")
