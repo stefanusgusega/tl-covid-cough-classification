@@ -96,9 +96,12 @@ class Preprocessor:
             numpy_data, labels = convert_audio_to_numpy(
                 self.df,
                 audio_folder_path=self.audio_folder_path,
+                checkpoint_folder_path=self.pickle_folder,
                 sampling_rate=sampling_rate,
-                filename_colname=self.filename_colname,
-                label_colname=self.label_colname,
+                df_args=dict(
+                    filename_colname=self.filename_colname,
+                    label_colname=self.label_colname,
+                ),
                 **self.kwargs
             )
 
