@@ -121,15 +121,18 @@ def convert_audio_to_numpy(
         checkpoint = dict(datas=[], labels=[], last_index=-1)
 
     df = df.loc[checkpoint["last_index"] + 1 :]
-    samples = checkpoint["datas"]
-    statuses = checkpoint["labels"]
+    samples = checkpoint["datas"].tolist()
+    statuses = checkpoint["labels"].tolist()
 
     # Create new folder to save checkpoint
     specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data_ckpt")
 
     print("Converting audio to numpy array...")
 
-    for idx, row in tqdm(df.iterrows(), total=len(df)):
+    # Start tqdm from initial checkpoint state, or if there's no ckpt, it will start from 0
+    for idx, row in tqdm(
+        df.iterrows(), initial=len(statuses), total=(len(statuses) + len(df))
+    ):
         # Check if the filename already including extension. If yes, then use it instead.
         if row[df_args["filename_colname"]].split(".")[-1] in AUDIO_EXTENSIONS:
             filename = row[df_args["filename_colname"]]
