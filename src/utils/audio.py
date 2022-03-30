@@ -10,7 +10,7 @@ import librosa
 from audiomentations import TimeStretch, Gain, Compose
 from scipy import signal
 from tqdm import tqdm
-from src.utils.chore import generate_now_datetime, save_obj_to_pkl
+from src.utils.chore import create_folder, save_obj_to_pkl
 
 AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg"]
 
@@ -106,6 +106,9 @@ def convert_audio_to_numpy(
             filename_colname="uuid", ext_colname="ext", label_colname="status"
         )
 
+    # Create new folder to save checkpoint
+    specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data")
+
     samples = []
     statuses = []
 
@@ -132,12 +135,12 @@ def convert_audio_to_numpy(
             samples.append(audio_data)
         statuses.append(row[df_args["label_colname"]])
 
-        # Save the backup
+        # Save the backup to the created specific checkpoint folder
         save_obj_to_pkl(
             (np.array(samples), np.array(statuses), idx),
             os.path.join(
                 checkpoint_folder_path,
-                f"numpy_data_{generate_now_datetime}/numpy_data.pkl",
+                f"{specific_ckpt_folder_name}/numpy_data.pkl",
             ),
         )
 
