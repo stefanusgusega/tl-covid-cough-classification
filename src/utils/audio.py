@@ -152,7 +152,7 @@ def convert_audio_to_numpy(
 
         # Save the backup to the created specific checkpoint folder
         save_obj_to_pkl(
-            (np.array(samples), np.array(statuses), idx),
+            dict(datas=np.array(samples), labels=np.array(statuses), last_index=idx),
             os.path.join(
                 checkpoint_folder_path,
                 f"{specific_ckpt_folder_name}/numpy_data.pkl",
