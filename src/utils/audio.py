@@ -120,7 +120,7 @@ def convert_audio_to_numpy(
     ):
         checkpoint = dict(datas=[], labels=[], last_index=-1)
 
-    df = df[checkpoint["last_index"] + 1 :]
+    df = df.loc[checkpoint["last_index"] + 1 :]
     samples = checkpoint["datas"]
     statuses = checkpoint["labels"]
 
