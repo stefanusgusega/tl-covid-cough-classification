@@ -65,10 +65,12 @@ class Preprocessor:
         self.current_labels = None
         self.current_state = "initialized"
 
-        if start_index is None or list(start_index.keys()) != [
-            "numpy_data",
-            "segment",
-        ]:
+        if start_index is None or set(start_index.keys()) != set(
+            [
+                "numpy_data",
+                "segment",
+            ]
+        ):
             start_index = dict(numpy_data=0, segment=0)
 
         self.start_index = start_index

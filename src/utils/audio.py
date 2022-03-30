@@ -101,11 +101,13 @@ def convert_audio_to_numpy(
     If segment, please specify on ```segment_args``` the ```start_colname``` and ```end_colname```.
     """
 
-    df_args_keys = ["filename_colname", "ext_colname", "label_colname", "start_index"]
+    df_args_keys = set(
+        ["filename_colname", "ext_colname", "label_colname", "start_index"]
+    )
 
     # If df_args didn't specified or the keys are incomplete,
     # then use this defaults
-    if df_args is None or list(df_args.keys()) != df_args_keys:
+    if df_args is None or set(df_args.keys()) != df_args_keys:
         df_args = dict(
             filename_colname="uuid",
             ext_colname="ext",
