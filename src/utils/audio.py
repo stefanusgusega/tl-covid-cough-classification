@@ -207,11 +207,9 @@ def generate_segmented_data(
     print("Segmenting audio data...")
 
     for idx, (data, status_data) in tqdm(
-        enumerate(
-            zip(samples_data, audio_labels),
-            initial=len(labels_data),
-            total=(len(labels_data) + len(samples_data)),
-        ),
+        enumerate(zip(samples_data, audio_labels)),
+        initial=len(labels_data),
+        total=(len(labels_data) + len(samples_data)),
     ):
         segments, labels = segment_cough_and_label(
             data, status_data, sampling_rate=sampling_rate
