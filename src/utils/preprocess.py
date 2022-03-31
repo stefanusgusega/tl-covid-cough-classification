@@ -153,7 +153,9 @@ class Preprocessor:
 
     def equalize_duration(self):
         # Equalize the data duration, the data should be produced from segmentation
-        assert self.current_state == "segmented"
+        # Should ensure that this is run from second_run() method
+        # Because it changes the state to 'aggregated'
+        assert self.current_state == "aggregated"
 
         try:
             print("Loading equal duration data from 'equal_duration_data.pkl'...")
@@ -234,8 +236,6 @@ class Preprocessor:
                 win_length=win_length,
             )
 
-        # TODO: MFCC
-
         res = features, self.current_labels.reshape(-1, 1)
 
         # Save to pickle file for the final features
@@ -249,15 +249,40 @@ class Preprocessor:
 
         return res
 
-    def run(
+    def first_run(
         self,
+        sampling_rate: int = 16000,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        This is the process of preprocessing that should be
+        run on single dataset, and then this method only produce the
+        segmented audio data and segmented label.
+        """
+        # ! Just do until segment audio
+        # ! and then produce the segmented audio
+        self.convert_to_numpy(sampling_rate=sampling_rate)
+        self.segment_audio(sampling_rate=sampling_rate)
+
+        # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
+        return self.current_data, self.current_labels
+
+    def second_run(
+        self,
+        aggregated_data,
+        aggregated_labels,
         sampling_rate: int = 16000,
         n_fft: int = 2048,
         hop_length: int = 512,
         win_length: int = None,
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        self.convert_to_numpy(sampling_rate=sampling_rate)
-        self.segment_audio(sampling_rate=sampling_rate)
+    ):
+        """
+        This run should be run if the data and labels are agrregated
+        from many datasets
+        """
+        self.current_data = aggregated_data
+        self.current_labels = aggregated_labels
+        self.current_state = "aggregated"
+
         self.equalize_duration()
         self.balance()
         self.extract(
@@ -266,6 +291,7 @@ class Preprocessor:
             hop_length=hop_length,
             win_length=win_length,
         )
+        # TODO : add CMVN
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels
