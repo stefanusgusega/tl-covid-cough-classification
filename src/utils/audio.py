@@ -121,8 +121,8 @@ def convert_audio_to_numpy(
         checkpoint = dict(datas=[], labels=[], last_index=-1)
 
     df = df.loc[checkpoint["last_index"] + 1 :]
-    samples = checkpoint["datas"].tolist()
-    statuses = checkpoint["labels"].tolist()
+    samples = list(checkpoint["datas"])
+    statuses = list(checkpoint["labels"])
 
     # Create new folder to save checkpoint
     specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data_ckpt")
@@ -198,8 +198,8 @@ def generate_segmented_data(
         checkpoint = dict(datas=[], labels=[], last_index=-1)
 
     samples_data = samples_data[checkpoint["last_index"] + 1 :]
-    new_data = checkpoint["datas"].tolist()
-    labels_data = checkpoint["labels"].tolist()
+    new_data = list(checkpoint["datas"])
+    labels_data = list(checkpoint["labels"])
 
     # Create new folder to save checkpoint
     specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "segmented_ckpt")
