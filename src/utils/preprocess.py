@@ -133,7 +133,11 @@ class Preprocessor:
             print("Segmented data loaded.")
         except FileNotFoundError:
             segmented_data, segmented_labels = generate_segmented_data(
-                self.current_data, self.current_labels, sampling_rate=sampling_rate
+                self.current_data,
+                self.current_labels,
+                checkpoint_folder_path=self.pickle_folder,
+                checkpoint=self.checkpoints["segments"],
+                sampling_rate=sampling_rate,
             )
 
             if self.backup_every_stage:

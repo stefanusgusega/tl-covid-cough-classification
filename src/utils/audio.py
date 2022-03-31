@@ -179,6 +179,8 @@ def segment_cough_and_label(
 def generate_segmented_data(
     samples_data: np.ndarray,
     audio_labels: np.ndarray,
+    checkpoint_folder_path: str,
+    checkpoint: dict = None,
     sampling_rate: int = 16000,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -188,13 +190,28 @@ def generate_segmented_data(
             f"{len(samples_data)} != {len(audio_labels)}"
         )
 
-    new_data = []
-    labels_data = []
+    # Check if checkpoint is isn't specified or the keys are incomplete,
+    # Apply defaults
+    if checkpoint is None or set(checkpoint.keys()) != set(
+        ["datas", "labels", "last_index"]
+    ):
+        checkpoint = dict(datas=[], labels=[], last_index=-1)
+
+    samples_data = samples_data[checkpoint["last_index"] + 1 :]
+    new_data = checkpoint["datas"].tolist()
+    labels_data = checkpoint["labels"].tolist()
+
+    # Create new folder to save checkpoint
+    specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "segmented_ckpt")
 
     print("Segmenting audio data...")
 
-    for data, status_data in tqdm(
-        zip(samples_data, audio_labels), total=len(samples_data)
+    for idx, (data, status_data) in tqdm(
+        enumerate(
+            zip(samples_data, audio_labels),
+            initial=len(labels_data),
+            total=(len(labels_data) + len(samples_data)),
+        ),
     ):
         segments, labels = segment_cough_and_label(
             data, status_data, sampling_rate=sampling_rate
@@ -205,6 +222,18 @@ def generate_segmented_data(
 
         # Append the segmented labels
         labels_data.append(labels)
+
+        # Checkpointing
+        save_obj_to_pkl(
+            dict(
+                datas=np.array(new_data),
+                labels=np.concatenate(np.array(labels_data)),
+                last_index=idx,
+            ),
+            os.path.join(
+                checkpoint_folder_path, f"{specific_ckpt_folder_name}/segmented.pkl"
+            ),
+        )
 
     labels_data = np.array(labels_data)
 
@@ -273,7 +302,6 @@ def augment_data(
 
     augment_array = [time_stretch_augment, gain_augment, ts_gain_augment]
 
-    # TODO: should check the truthy of this code
     print("Augmenting data...")
 
     for _ in tqdm(range(n_aug)):
