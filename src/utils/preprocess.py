@@ -136,7 +136,7 @@ class Preprocessor:
                 self.current_data,
                 self.current_labels,
                 checkpoint_folder_path=self.pickle_folder,
-                checkpoint=self.checkpoints["segments"],
+                checkpoint=self.checkpoints["segment"],
                 sampling_rate=sampling_rate,
             )
 
