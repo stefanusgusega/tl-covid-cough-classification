@@ -3,6 +3,7 @@ Trainer module.
 """
 import os
 import numpy as np
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
@@ -46,6 +47,8 @@ class Trainer:
         # self.val_metrics_arr = []
         self.test_losses_arr = []
         # self.val_losses_arr = []
+        self.train_accuracy_arr = []
+        self.test_accuracy_arr = []
 
         # Init callbacks array
         self.callbacks_arr = []
@@ -136,9 +139,28 @@ class Trainer:
             print(f"Evaluating model fold {outer_idx + 1}/{n_splits}...")
             loss, metric = model.evaluate(x_test, y_test)
 
+            # Get accuracy
+            y_train_pred = np.argmax(model.predict(x_folds), axis=1)
+            print(y_train_pred)
+            print(np.argmax(y_folds, axis=1))
+            y_train_acc = accuracy_score(
+                y_pred=y_train_pred, y_true=np.argmax(y_folds, axis=1)
+            )
+            y_test_pred = np.argmax(model.predict(x_test), axis=1)
+            y_test_acc = accuracy_score(
+                y_pred=y_test_pred, y_true=np.argmax(y_test, axis=1)
+            )
+
+            print(f"Training accuracy: {y_train_acc}")
+            print(f"Test accuracy: {y_test_acc}")
+
             # Save the values for outer loop
             self.test_metrics_arr.append(metric)
             self.test_losses_arr.append(loss)
+
+            # Save accuracy
+            self.train_accuracy_arr.append(y_train_acc)
+            self.test_accuracy_arr.append(y_test_acc)
 
     def generate_model(self):
         """
