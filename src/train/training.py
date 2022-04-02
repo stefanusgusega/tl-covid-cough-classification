@@ -137,12 +137,11 @@ class Trainer:
 
             # Evaluate model for outer loop
             print(f"Evaluating model fold {outer_idx + 1}/{n_splits}...")
-            loss, metric = model.evaluate(x_test, y_test)
+            # Accuracy from Keras seems inaccurate
+            loss, auc, acc = model.evaluate(x_test, y_test)
 
             # Get accuracy
             y_train_pred = np.argmax(model.predict(x_folds), axis=1)
-            print(y_train_pred)
-            print(np.argmax(y_folds, axis=1))
             y_train_acc = accuracy_score(
                 y_pred=y_train_pred, y_true=np.argmax(y_folds, axis=1)
             )
@@ -153,14 +152,15 @@ class Trainer:
 
             print(f"Training accuracy: {y_train_acc}")
             print(f"Test accuracy: {y_test_acc}")
+            print(f"Test accuracy based on keras metrics: {acc}")
 
             # Save the values for outer loop
-            self.test_metrics_arr.append(metric)
+            self.test_metrics_arr.append(auc)
             self.test_losses_arr.append(loss)
 
             # Save accuracy
             self.train_accuracy_arr.append(y_train_acc)
-            self.test_accuracy_arr.append(y_test_acc)
+            self.test_accuracy_arr.append(acc)
 
     def generate_model(self):
         """
