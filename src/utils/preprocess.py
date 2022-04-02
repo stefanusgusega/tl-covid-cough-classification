@@ -226,7 +226,7 @@ class Preprocessor:
             )[0]
             print("Features loaded.")
         except FileNotFoundError:
-            features = extract_melspec(self.current_data, kwargs)
+            features = extract_melspec(self.current_data, **kwargs)
 
         res = features, self.current_labels.reshape(-1, 1)
 
@@ -269,8 +269,7 @@ class Preprocessor:
 
         self.equalize_duration()
         self.balance()
-        self.extract(kwargs)
-        # TODO : add CMVN
+        self.extract(**kwargs)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels

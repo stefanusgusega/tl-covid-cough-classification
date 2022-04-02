@@ -25,7 +25,7 @@ class ResNet50Model(BaseModel):
 
     def build_model(self, metrics=None, n_classes: int = 2):
         if metrics is None:
-            metrics = [tf.keras.metrics.AUC()]
+            metrics = [tf.keras.metrics.AUC(), tf.keras.metrics.Accuracy()]
 
         input_tensor = tf.keras.layers.Input(shape=self.input_shape)
 

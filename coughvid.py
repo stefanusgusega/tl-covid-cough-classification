@@ -1,6 +1,7 @@
 """
 Main program for COUGHVID dataset
 """
+import argparse
 import os
 import pickle as pkl
 from src.train import Trainer
@@ -36,4 +37,7 @@ trainer = Trainer(
 # trainer.train(
 #     epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
 # )
-trainer.train(epochs=10)
+parser = argparse.ArgumentParser()
+parser.add_argument("-epoch", type=int)
+args = parser.parse_args()
+trainer.train(epochs=args.epoch)
