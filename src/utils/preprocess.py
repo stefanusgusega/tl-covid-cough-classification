@@ -216,13 +216,7 @@ class Preprocessor:
 
         return balanced_data, balanced_labels
 
-    def extract(
-        self,
-        sampling_rate: int = 16000,
-        n_fft: int = 2048,
-        hop_length: int = 512,
-        win_length: int = None,
-    ):
+    def extract(self, **kwargs):
         # Feature extraction
         assert self.current_state == "balanced"
         try:
@@ -232,13 +226,7 @@ class Preprocessor:
             )[0]
             print("Features loaded.")
         except FileNotFoundError:
-            features = extract_melspec(
-                self.current_data,
-                sampling_rate=sampling_rate,
-                n_fft=n_fft,
-                hop_length=hop_length,
-                win_length=win_length,
-            )
+            features = extract_melspec(self.current_data, kwargs)
 
         res = features, self.current_labels.reshape(-1, 1)
 
@@ -270,15 +258,7 @@ class Preprocessor:
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels
 
-    def second_run(
-        self,
-        aggregated_data,
-        aggregated_labels,
-        sampling_rate: int = 16000,
-        n_fft: int = 2048,
-        hop_length: int = 512,
-        win_length: int = None,
-    ):
+    def second_run(self, aggregated_data, aggregated_labels, **kwargs):
         """
         This run should be run if the data and labels are agrregated
         from many datasets
@@ -289,29 +269,8 @@ class Preprocessor:
 
         self.equalize_duration()
         self.balance()
-        self.extract(
-            sampling_rate=sampling_rate,
-            n_fft=n_fft,
-            hop_length=hop_length,
-            win_length=win_length,
-        )
+        self.extract(kwargs)
         # TODO : add CMVN
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels
-
-
-class FreeSoundPreprocessor(Preprocessor):
-    """
-    This is the class to preprocess FreeSound Dataset
-    """
-
-    ...
-
-
-class FluSensePreprocessor(Preprocessor):
-    """
-    This is the class to preprocess FluSense Dataset
-    """
-
-    ...

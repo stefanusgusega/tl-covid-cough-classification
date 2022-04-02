@@ -36,4 +36,4 @@ trainer = Trainer(
 # trainer.train(
 #     epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
 # )
-trainer.train(epochs=2)
+trainer.train(epochs=10)
