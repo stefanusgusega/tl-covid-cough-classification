@@ -314,12 +314,7 @@ def augment_data(
 
 
 def extract_melspec(
-    audio_datas: np.ndarray,
-    sampling_rate: int,
-    n_fft: int = 2048,
-    hop_length: int = 512,
-    win_length: int = None,
-    is_cmvn: bool = True,
+    audio_datas: np.ndarray, sampling_rate: int, is_cmvn: bool = True, **kwargs
 ) -> np.ndarray:
     # Initiate new container
     mel_specs = []
@@ -329,18 +324,11 @@ def extract_melspec(
     # For each audio
     for audio in tqdm(audio_datas):
         mel_spec = librosa.feature.melspectrogram(
-            audio,
-            sr=sampling_rate,
-            n_fft=n_fft,
-            hop_length=hop_length,
-            win_length=win_length,
-            window=signal.windows.hamming,
+            audio, sr=sampling_rate, window=signal.windows.hamming, **kwargs
         )
 
         # Change to decibels instead of power spectrogram
         log_mel_spec = librosa.power_to_db(mel_spec)
-
-        mel_specs.append(log_mel_spec)
 
         if is_cmvn:
             normalized = cmvn(np.array(log_mel_spec), variance_normalization=True)
