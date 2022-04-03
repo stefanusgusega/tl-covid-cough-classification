@@ -319,7 +319,7 @@ def extract_melspec(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: int = None,
-    cmvn: bool = True,
+    is_cmvn: bool = True,
 ) -> np.ndarray:
     # Initiate new container
     mel_specs = []
@@ -342,10 +342,8 @@ def extract_melspec(
 
         mel_specs.append(log_mel_spec)
 
-        if cmvn:
-            normalized = cmvn(
-                np.array(log_mel_spec), win_size=win_length, variance_normalization=True
-            )
+        if is_cmvn:
+            normalized = cmvn(np.array(log_mel_spec), variance_normalization=True)
             mel_specs.append(normalized)
         else:
             mel_specs.append(log_mel_spec)
