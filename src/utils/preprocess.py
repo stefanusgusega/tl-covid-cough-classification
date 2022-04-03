@@ -34,6 +34,7 @@ def encode_label(labels: np.ndarray, pos_label: str = None):
         if pos_label is None:
             raise Exception("Please specify which is the positive label")
         labels = np.where(labels == pos_label, 1, 0).reshape(-1, 1)
+        return labels
 
     return to_categorical(labels)
 
