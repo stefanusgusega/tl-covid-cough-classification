@@ -314,7 +314,7 @@ def augment_data(
 
 
 def extract_melspec(
-    audio_datas: np.ndarray, sampling_rate: int, is_cmvn: bool = True, **kwargs
+    audio_datas: np.ndarray, sampling_rate: int, is_normalize: bool = True, **kwargs
 ) -> np.ndarray:
     # Initiate new container
     mel_specs = []
@@ -330,10 +330,24 @@ def extract_melspec(
         # Change to decibels instead of power spectrogram
         log_mel_spec = librosa.power_to_db(mel_spec)
 
-        if is_cmvn:
-            normalized = cmvn(np.array(log_mel_spec), variance_normalization=True)
+        # if is_normalize:
+        #     normalized = cmvn(np.array(log_mel_spec), variance_normalization=True)
+        #     mel_specs.append(normalized)
+        # else:
+        #     mel_specs.append(log_mel_spec)
+
+        if is_normalize:
+            normalized = min_max_scaler(np.array(log_mel_spec))
             mel_specs.append(normalized)
         else:
             mel_specs.append(log_mel_spec)
-
     return np.array(mel_specs)
+
+
+def min_max_scaler(data: np.ndarray, min_val: float = -1.0, max_val: float = 1.0):
+    maximum = np.max(data)
+    minimum = np.min(data)
+
+    scaled = min_val + (data - minimum) / (maximum - minimum) * (max_val - min_val)
+
+    return scaled

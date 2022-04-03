@@ -1,8 +1,6 @@
 """
 Main program for COUGHVID dataset
 """
-from speechpy.processing import cmvn, cmvnw
-from tqdm import tqdm
 import argparse
 import numpy as np
 import os
@@ -17,12 +15,7 @@ with (open(os.path.join(DUMP_PATH, "features.pkl"), "rb")) as f:
 
 print(features[0].shape)
 
-cmvns = []
-for feat in tqdm(features[0]):
-    cmvned = cmvnw(feat, win_size=2047, variance_normalization=True)
-    cmvns.append(cmvned)
-
-cmvns = np.array(cmvns)
+print((np.max(features[0]), np.min(features[0])))
 
 model_args = {"input_shape": (features[0].shape[1], features[0].shape[2], 1)}
 
@@ -37,7 +30,7 @@ hp_args = {
 }
 
 trainer = Trainer(
-    audio_datas=cmvns,
+    audio_datas=features[0],
     audio_labels=features[1],
     model_args=model_args,
     tensorboard_log_dir=LOG_PATH,
