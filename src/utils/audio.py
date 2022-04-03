@@ -4,7 +4,7 @@ Audio util functions.
 
 import os
 from typing import Tuple
-from speechpy.processing import cmvnw
+from speechpy.processing import cmvn
 import numpy as np
 import pandas as pd
 import librosa
@@ -342,11 +342,12 @@ def extract_melspec(
 
         mel_specs.append(log_mel_spec)
 
-        res = np.array(mel_specs)
-
         if cmvn:
-            res = cmvnw(
-                np.array(mel_specs), win_size=win_length, variance_normalization=True
+            normalized = cmvn(
+                np.array(log_mel_spec), win_size=win_length, variance_normalization=True
             )
+            mel_specs.append(normalized)
+        else:
+            mel_specs.append(log_mel_spec)
 
-    return res
+    return np.array(mel_specs)

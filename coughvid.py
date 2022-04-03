@@ -1,7 +1,10 @@
 """
 Main program for COUGHVID dataset
 """
+from speechpy.processing import cmvn, cmvnw
+from tqdm import tqdm
 import argparse
+import numpy as np
 import os
 import pickle as pkl
 from src.train import Trainer
@@ -13,6 +16,13 @@ with (open(os.path.join(DUMP_PATH, "features.pkl"), "rb")) as f:
     features = pkl.load(f)
 
 print(features[0].shape)
+
+cmvns = []
+for feat in tqdm(features[0]):
+    cmvned = cmvnw(feat, win_size=2047, variance_normalization=True)
+    cmvns.append(cmvned)
+
+cmvns = np.array(cmvns)
 
 model_args = {"input_shape": (features[0].shape[1], features[0].shape[2], 1)}
 
@@ -27,7 +37,7 @@ hp_args = {
 }
 
 trainer = Trainer(
-    audio_datas=features[0],
+    audio_datas=cmvns,
     audio_labels=features[1],
     model_args=model_args,
     tensorboard_log_dir=LOG_PATH,
@@ -38,6 +48,7 @@ trainer = Trainer(
 #     epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
 # )
 parser = argparse.ArgumentParser()
-parser.add_argument("-epoch", type=int)
+parser.add_argument("-e", type=int)
+parser.add_argument("-bs", type=int)
 args = parser.parse_args()
-trainer.train(epochs=args.epoch)
+trainer.train(epochs=args.e, batch_size=args.bs)
