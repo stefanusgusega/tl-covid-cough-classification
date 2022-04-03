@@ -38,9 +38,9 @@ class ResNet50Model(BaseModel):
 
         # The fully connected layers
         model = tf.keras.layers.Dense(512, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.25)(model)
+        model = tf.keras.layers.Dropout(rate=0.2)(model)
         model = tf.keras.layers.Dense(32, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.25)(model)
+        model = tf.keras.layers.Dropout(rate=0.2)(model)
         model = tf.keras.layers.Dense(n_classes, activation="softmax")(model)
 
         model = tf.keras.models.Model(
@@ -49,7 +49,7 @@ class ResNet50Model(BaseModel):
 
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-            # optimizer=tf.keras.optimizers.SGD(),
+            # optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
             loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=metrics,
         )
@@ -57,6 +57,6 @@ class ResNet50Model(BaseModel):
         # Save to attribute
         self.model = model
 
-        print(self.model.summary())
+        # print(self.model.summary())
 
         return model
