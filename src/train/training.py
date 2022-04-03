@@ -105,6 +105,9 @@ class Trainer:
             y_folds = encode_label(y_folds, "COVID-19")
             y_test = encode_label(y_test, "COVID-19")
 
+            print(y_folds)
+            # break
+
             # TODO : Hyperparameter tuning
             # ! This is still tuning in classifier level
             # If not intended to do tuning, then directly generate model and build
