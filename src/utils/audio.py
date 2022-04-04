@@ -140,28 +140,33 @@ def convert_audio_to_numpy(
         else:
             filename = row[df_args["filename_colname"]] + row[df_args["ext_colname"]]
 
-        # Sampling rate is not returned because it will make worse memory usage
-        audio_data, _ = librosa.load(
-            os.path.join(audio_folder_path, filename), sr=sampling_rate
-        )
+        try:
+            # Sampling rate is not returned because it will make worse memory usage
+            audio_data, _ = librosa.load(
+                os.path.join(audio_folder_path, filename), sr=sampling_rate
+            )
 
-        # If directly segment, then should know the start sample and end sample as stated on df
-        if segment:
-            start_sample = round(sampling_rate * row[segment_args["start_colname"]])
-            end_sample = round(sampling_rate * row[segment_args["end_colname"]])
-            samples.append(audio_data[start_sample : end_sample + 1])
-        else:
-            samples.append(audio_data)
-        statuses.append(row[df_args["label_colname"]])
+            # If directly segment, then should know the start sample and end sample as stated on df
+            if segment:
+                start_sample = round(sampling_rate * row[segment_args["start_colname"]])
+                end_sample = round(sampling_rate * row[segment_args["end_colname"]])
+                samples.append(audio_data[start_sample : end_sample + 1])
+            else:
+                samples.append(audio_data)
+            statuses.append(row[df_args["label_colname"]])
 
-        # Save the backup to the created specific checkpoint folder
-        save_obj_to_pkl(
-            dict(datas=np.array(samples), labels=np.array(statuses), last_index=idx),
-            os.path.join(
-                checkpoint_folder_path,
-                f"{specific_ckpt_folder_name}/numpy_data.pkl",
-            ),
-        )
+            # Save the backup to the created specific checkpoint folder
+            save_obj_to_pkl(
+                dict(
+                    datas=np.array(samples), labels=np.array(statuses), last_index=idx
+                ),
+                os.path.join(
+                    checkpoint_folder_path,
+                    f"{specific_ckpt_folder_name}/numpy_data.pkl",
+                ),
+            )
+        except ValueError:
+            pass
 
     return np.array(samples), np.array(statuses)
 
