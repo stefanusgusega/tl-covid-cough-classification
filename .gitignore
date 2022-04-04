@@ -130,3 +130,6 @@ dmypy.json
 
 # Filedumps
 dumps/
+
+# My own logs
+logs/
