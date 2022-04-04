@@ -336,7 +336,7 @@ def extract_melspec(
         log_mel_spec = librosa.power_to_db(mel_spec)
 
         if is_normalize:
-            normalized = cmvn(np.array(log_mel_spec), **kwargs)
+            normalized = cmvn(np.array(log_mel_spec))
             mel_specs.append(normalized)
         else:
             mel_specs.append(log_mel_spec)
