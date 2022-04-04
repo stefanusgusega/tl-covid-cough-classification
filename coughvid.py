@@ -2,11 +2,18 @@
 Main program for COUGHVID dataset
 """
 import argparse
-import numpy as np
 import os
+import sys
 import pickle as pkl
+import numpy as np
 from src.train import Trainer
+from src.utils.chore import generate_now_datetime
 
+sys.stdout = open(
+    os.path.join("logs", "coughvid", f"{generate_now_datetime()}.txt"),
+    "w",
+    encoding="utf-8",
+)
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 
@@ -45,3 +52,5 @@ parser.add_argument("-e", type=int)
 parser.add_argument("-bs", type=int)
 args = parser.parse_args()
 trainer.train(epochs=args.e, batch_size=args.bs)
+
+sys.stdout.close()
