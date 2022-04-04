@@ -335,17 +335,17 @@ def extract_melspec(
         # Change to decibels instead of power spectrogram
         log_mel_spec = librosa.power_to_db(mel_spec)
 
-        # if is_normalize:
-        #     normalized = cmvn(np.array(log_mel_spec), variance_normalization=True)
-        #     mel_specs.append(normalized)
-        # else:
-        #     mel_specs.append(log_mel_spec)
-
         if is_normalize:
-            normalized = min_max_scaler(np.array(log_mel_spec))
+            normalized = cmvn(np.array(log_mel_spec), **kwargs)
             mel_specs.append(normalized)
         else:
             mel_specs.append(log_mel_spec)
+
+        # if is_normalize:
+        #     normalized = min_max_scaler(np.array(log_mel_spec))
+        #     mel_specs.append(normalized)
+        # else:
+        #     mel_specs.append(log_mel_spec)
     return np.array(mel_specs)
 
 
