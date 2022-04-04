@@ -158,9 +158,7 @@ class Preprocessor:
 
     def equalize_duration(self):
         # Equalize the data duration, the data should be produced from segmentation
-        # Should ensure that this is run from second_run() method
-        # Because it changes the state to 'aggregated'
-        assert self.current_state == "aggregated"
+        assert self.current_state == "balanced"
 
         try:
             print("Loading equal duration data from 'equal_duration_data.pkl'...")
@@ -186,7 +184,9 @@ class Preprocessor:
         return equal_duration_data, self.current_labels
 
     def balance(self):
-        assert self.current_state == "equalized"
+        # Should ensure that this is run from second_run() method
+        # Because it changes the state to 'aggregated'
+        assert self.current_state == "aggregated"
 
         try:
             print("Loading balanced data from 'balanced_data.pkl'...")
@@ -219,7 +219,7 @@ class Preprocessor:
 
     def extract(self, **kwargs):
         # Feature extraction
-        assert self.current_state == "balanced"
+        assert self.current_state == "equalized"
         try:
             print("Loading features from 'features.pkl'...")
             features = load_obj_from_pkl(
@@ -268,8 +268,8 @@ class Preprocessor:
         self.current_labels = aggregated_labels
         self.current_state = "aggregated"
 
-        self.equalize_duration()
         self.balance()
+        self.equalize_duration()
         self.extract(**kwargs)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
