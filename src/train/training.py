@@ -83,10 +83,6 @@ class Trainer:
         # The outer is to split between data and test
         outer_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
-        # The center is to split between train and vals
-        # center_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-        # inner_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-
         for outer_idx, (folds_index, test_index) in enumerate(
             outer_skf.split(self.x_full, self.y_full)
         ):

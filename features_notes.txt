@@ -1,0 +1,2 @@
+1. sampling_rate=16000, win_length=512, hop_length=160, n_mels=128, n_fft=512
+2. sampling_rate=16000, win_length=512, hop_length=160, n_mels=64, n_fft=512
