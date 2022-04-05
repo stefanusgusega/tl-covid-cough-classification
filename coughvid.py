@@ -5,7 +5,6 @@ import argparse
 import os
 import sys
 import pickle as pkl
-import numpy as np
 from src.train import Trainer
 from src.utils.chore import generate_now_datetime
 
@@ -14,15 +13,26 @@ sys.stdout = open(
     "w",
     encoding="utf-8",
 )
+# Argument parser
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", type=int)
+parser.add_argument("-f")
+parser.add_argument("-bs", type=int)
+args = parser.parse_args()
+
+epochs = args.e
+batch_size = args.bs
+
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
+FEATURE_FILE = args.f
 
-with (open(os.path.join(DUMP_PATH, "features.pkl"), "rb")) as f:
+with (open(os.path.join(DUMP_PATH, FEATURE_FILE), "rb")) as f:
     features = pkl.load(f)
 
-print(features[0].shape)
-
-print((np.max(features[0]), np.min(features[0])))
+print(f"Epoch: {epochs}")
+print(f"Batch size: {batch_size}")
+print(f"Feature file: {FEATURE_FILE}")
 
 model_args = {"input_shape": (features[0].shape[1], features[0].shape[2], 1)}
 
@@ -47,10 +57,7 @@ trainer = Trainer(
 # trainer.train(
 #     epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")
 # )
-parser = argparse.ArgumentParser()
-parser.add_argument("-e", type=int)
-parser.add_argument("-bs", type=int)
-args = parser.parse_args()
-trainer.train(epochs=args.e, batch_size=args.bs)
+
+trainer.train(epochs=epochs, batch_size=batch_size)
 
 sys.stdout.close()
