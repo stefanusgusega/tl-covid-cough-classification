@@ -217,7 +217,7 @@ class Preprocessor:
 
         return balanced_data, balanced_labels
 
-    def extract(self, var_norm: bool = False, **kwargs):
+    def extract(self, **kwargs):
         # Feature extraction
         assert self.current_state == "balanced"
 
@@ -228,7 +228,7 @@ class Preprocessor:
             )[0]
             print("Features loaded.")
         except FileNotFoundError:
-            features = extract_melspec(self.current_data, var_norm=var_norm, **kwargs)
+            features = extract_melspec(self.current_data, **kwargs)
 
         res = features, self.current_labels.reshape(-1, 1)
 
@@ -260,7 +260,7 @@ class Preprocessor:
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels
 
-    def second_run(self, aggregated_data, aggregated_labels, var_norm=False, **kwargs):
+    def second_run(self, aggregated_data, aggregated_labels, **kwargs):
         """
         This run should be run if the data and labels are agrregated
         from many datasets
@@ -271,7 +271,7 @@ class Preprocessor:
 
         self.equalize_duration()
         self.balance()
-        self.extract(var_norm=var_norm, **kwargs)
+        self.extract(**kwargs)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels
