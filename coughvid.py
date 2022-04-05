@@ -30,6 +30,7 @@ FEATURE_FILE = args.f
 with (open(os.path.join(DUMP_PATH, FEATURE_FILE), "rb")) as f:
     features = pkl.load(f)
 
+print("Dataset: COUGHVID")
 print(f"Epoch: {epochs}")
 print(f"Batch size: {batch_size}")
 print(f"Feature file: {FEATURE_FILE}")
@@ -53,6 +54,7 @@ trainer = Trainer(
     tensorboard_log_dir=LOG_PATH,
     # hyperparameter_tuning_args=hp_args,
 )
+
 # trainer.set_tensorboard_callback(log_dir=LOG_PATH)
 # trainer.train(
 #     epochs=2, hp_model_tuning_folder=os.path.join(DUMP_PATH, "hyperparameter_models/")

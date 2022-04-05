@@ -87,3 +87,185 @@ Epoch 20/20
 114/114 [==============================] - 14s 126ms/step - loss: 0.6259 - auc_1: 0.7077 - accuracy: 0.6532 - val_loss: 0.7020 - val_auc_1: 0.6017 - val_accuracy: 0.5746
 Evaluating model fold 2/5...
 29/29 [==============================] - 1s 30ms/step - loss: 0.7020 - auc_1: 0.6017 - accuracy: 0.5746
+
+* 20220405-101110
+if metrics is None:
+    metrics = [tf.keras.metrics.AUC(), "accuracy"]
+
+input_tensor = tf.keras.layers.Input(shape=self.input_shape)
+
+# ResNet50 block
+model = resnet50_block(input_tensor=input_tensor)
+
+# The top layer of ResNet
+model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
+model = tf.keras.layers.Flatten()(model)
+
+# The fully connected layers
+model = tf.keras.layers.Dense(512, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+model = tf.keras.layers.Dense(256, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(128, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
+
+model = tf.keras.models.Model(
+    inputs=input_tensor, outputs=model, name="ResNet50"
+)
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    metrics=metrics,
+)
+
+* 20220405-104100
+if metrics is None:
+    metrics = [tf.keras.metrics.AUC(), "accuracy"]
+
+input_tensor = tf.keras.layers.Input(shape=self.input_shape)
+
+# ResNet50 block
+model = resnet50_block(input_tensor=input_tensor)
+
+# The top layer of ResNet
+model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
+model = tf.keras.layers.Flatten()(model)
+
+# The fully connected layers
+model = tf.keras.layers.Dense(512, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+model = tf.keras.layers.Dense(256, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(128, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(32, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
+
+model = tf.keras.models.Model(
+    inputs=input_tensor, outputs=model, name="ResNet50"
+)
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    metrics=metrics,
+)
+
+* 20220405-110715
+if metrics is None:
+    metrics = [tf.keras.metrics.AUC(), "accuracy"]
+
+input_tensor = tf.keras.layers.Input(shape=self.input_shape)
+
+# ResNet50 block
+model = resnet50_block(input_tensor=input_tensor)
+
+# The top layer of ResNet
+model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
+model = tf.keras.layers.Flatten()(model)
+
+# The fully connected layers
+model = tf.keras.layers.Dense(512, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+model = tf.keras.layers.Dense(256, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(128, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(32, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
+
+model = tf.keras.models.Model(
+    inputs=input_tensor, outputs=model, name="ResNet50"
+)
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    metrics=metrics,
+)
+
+* 20220405-112639
+if metrics is None:
+    metrics = [tf.keras.metrics.AUC(), "accuracy"]
+
+input_tensor = tf.keras.layers.Input(shape=self.input_shape)
+
+# ResNet50 block
+model = resnet50_block(input_tensor=input_tensor)
+
+# The top layer of ResNet
+model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
+model = tf.keras.layers.Flatten()(model)
+
+# The fully connected layers
+model = tf.keras.layers.Dense(512, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+model = tf.keras.layers.Dense(256, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(128, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(32, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
+
+model = tf.keras.models.Model(
+    inputs=input_tensor, outputs=model, name="ResNet50"
+)
+
+model.compile(
+    optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    metrics=metrics,
+)
+
+* 20220405-115210
+if metrics is None:
+    metrics = [tf.keras.metrics.AUC(), "accuracy"]
+
+input_tensor = tf.keras.layers.Input(shape=self.input_shape)
+
+# ResNet50 block
+model = resnet50_block(input_tensor=input_tensor)
+
+# The top layer of ResNet
+model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
+model = tf.keras.layers.Flatten()(model)
+
+# The fully connected layers
+model = tf.keras.layers.Dense(512, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+model = tf.keras.layers.Dense(256, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(128, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(32, activation="relu")(model)
+model = tf.keras.layers.Dropout(rate=0.2)(model)
+
+model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
+
+model = tf.keras.models.Model(
+    inputs=input_tensor, outputs=model, name="ResNet50"
+)
+
+model.compile(
+    optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
+    loss=tf.keras.losses.BinaryCrossentropy(),
+    metrics=metrics,
+)
