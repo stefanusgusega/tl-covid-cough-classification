@@ -145,6 +145,10 @@ class Trainer:
             # Save accuracy
             self.test_accuracy_arr.append(acc)
 
+        print(f"AUC-ROC average: {np.mean(self.test_metrics_arr)}")
+        print(f"Accuracy average: {np.mean(self.test_accuracy_arr)}")
+        print(f"Loss average: {np.mean(self.test_losses_arr)}")
+
     def generate_model(self):
         """
         Generate the model based on model type with using model arguments

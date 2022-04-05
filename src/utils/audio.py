@@ -319,7 +319,11 @@ def augment_data(
 
 
 def extract_melspec(
-    audio_datas: np.ndarray, sampling_rate: int, is_normalize: bool = True, **kwargs
+    audio_datas: np.ndarray,
+    sampling_rate: int,
+    is_normalize: bool = True,
+    var_norm: bool = False,
+    **kwargs,
 ) -> np.ndarray:
     # Initiate new container
     mel_specs = []
@@ -336,7 +340,7 @@ def extract_melspec(
         log_mel_spec = librosa.power_to_db(mel_spec)
 
         if is_normalize:
-            normalized = cmvn(np.array(log_mel_spec))
+            normalized = cmvn(np.array(log_mel_spec), variance_normalization=var_norm)
             mel_specs.append(normalized)
         else:
             mel_specs.append(log_mel_spec)
