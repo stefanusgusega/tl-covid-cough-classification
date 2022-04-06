@@ -1,18 +1,14 @@
 """
 Trainer module.
 """
-import os
 import numpy as np
 from icecream import ic
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
-from scikeras.wrappers import KerasClassifier
 from src.model import ResNet50Model
-from src.utils.chore import generate_now_datetime
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
     generate_tensorboard_callback,
-    hyperparameter_tune_resnet_model,
 )
 
 AVAILABLE_MODELS = ["resnet50"]
@@ -29,7 +25,6 @@ class Trainer:
         audio_labels: np.ndarray,
         model_type: str = "resnet50",
         model_args: dict = None,
-        hyperparameter_tuning_args: dict = None,
         tensorboard_log_dir: str = None,
     ) -> None:
         # If not one of available models, throw an exception
@@ -56,7 +51,6 @@ class Trainer:
         self.model_type = model_type
         self.model_args = model_args
 
-        self.hyperparameter_tuning_args = hyperparameter_tuning_args
         self.using_tensorboard = False
 
         if tensorboard_log_dir is not None:
@@ -66,20 +60,13 @@ class Trainer:
 
     def train(
         self,
-        hp_model_tuning_folder: str = None,
         n_splits: int = 5,
         epochs: int = 100,
         batch_size: int = None,
     ):
         """
-        Train the model and save the hyperparameter model
+        Train the model
         """
-
-        if hp_model_tuning_folder is not None:
-            if self.hyperparameter_tuning_args is None:
-                raise Exception(
-                    "Please specify the hyperparameter tuning arguments at the constructor."
-                )
 
         # The outer is to split between data and test
         outer_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -114,16 +101,7 @@ class Trainer:
             ic(folds_index[:50])
             ic(test_index[:50])
 
-            # TODO : Hyperparameter tuning
-            # ! This is still tuning in classifier level
-            # If not intended to do tuning, then directly generate model and build
-            if self.hyperparameter_tuning_args is None:
-                model = self.generate_model().build_model()
-            # Else, hyperparameter tune it
-            else:
-                model = self.hyperparameter_tune(x_folds, y_folds)
-                # Save the optimized model
-                self.save_optimum_hyperparameter_model(hp_model_tuning_folder, model)
+            model = self.generate_model().build_model()
 
             # Training for this fold
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
@@ -186,44 +164,3 @@ class Trainer:
         Set the early stopping callback for fitting the model
         """
         self.callbacks_arr.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss"))
-
-    def hyperparameter_tune(
-        self, datas: np.ndarray, labels: np.ndarray, n_splits: int = 5
-    ) -> tf.keras.Model:
-        """
-        This is located in deepest loop of nested cross validation.
-        Should return the best model.
-        """
-        initial_model = self.generate_model()
-
-        model = KerasClassifier(
-            model=hyperparameter_tune_resnet_model,
-            optimizer="adam",
-            # This is kwargs
-            first_dense_units=[],
-            second_dense_units=[],
-            learning_rates=[],
-            initial_model=initial_model,
-        )
-
-        grid = GridSearchCV(
-            estimator=model,
-            param_grid=self.hyperparameter_tuning_args,
-            # scoring="roc_auc",
-            cv=n_splits,
-            verbose=1,
-        )
-        grid_result = grid.fit(datas, labels)
-
-        return grid_result.best_estimator_.model_
-
-    # TODO : save as h5 file, maybe add parameter to choose whether save as h5 or not.
-    def save_optimum_hyperparameter_model(self, folder: str, model: tf.keras.Model):
-        """
-        Save the optimum hyperparameter model for specified traning folds in specified folder.
-        """
-        if self.hyperparameter_tuning_args is not None:
-            folder_name = os.path.join(folder, generate_now_datetime())
-            print("Saving the optimum hyperparameter model...")
-            model.save(folder_name)
-            print(f"Optimum hyperparameter model saved at {folder_name}.")
