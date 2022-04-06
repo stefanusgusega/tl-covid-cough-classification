@@ -68,6 +68,6 @@ class ResNet50Model(BaseModel):
         # Save to attribute
         self.model = model
 
-        print(self.model.summary())
+        # print(self.model.summary())
 
         return model
