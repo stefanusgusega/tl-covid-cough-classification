@@ -3,6 +3,7 @@ Trainer module.
 """
 import os
 import numpy as np
+from icecream import ic
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import tensorflow as tf
 from scikeras.wrappers import KerasClassifier
@@ -86,8 +87,18 @@ class Trainer:
         for outer_idx, (folds_index, test_index) in enumerate(
             outer_skf.split(self.x_full, self.y_full)
         ):
-            x_folds, x_test = self.x_full[folds_index], self.x_full[test_index]
-            y_folds, y_test = self.y_full[folds_index], self.y_full[test_index]
+            # Shuffle the index produced
+            np.random.shuffle(folds_index)
+            np.random.shuffle(test_index)
+
+            x_folds, x_test = (
+                self.x_full[folds_index],
+                self.x_full[test_index],
+            )
+            y_folds, y_test = (
+                self.y_full[folds_index],
+                self.y_full[test_index],
+            )
 
             # If the model is a resnet-50, the input should be expanded
             # Because ResNet expects a 3D shape
@@ -100,8 +111,8 @@ class Trainer:
             y_folds = encode_label(y_folds, "COVID-19")
             y_test = encode_label(y_test, "COVID-19")
 
-            print(y_folds)
-            # break
+            ic(folds_index[:50])
+            ic(test_index[:50])
 
             # TODO : Hyperparameter tuning
             # ! This is still tuning in classifier level
