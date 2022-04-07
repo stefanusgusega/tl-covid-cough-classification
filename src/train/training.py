@@ -9,6 +9,7 @@ from src.model import ResNet50Model
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
     generate_tensorboard_callback,
+    lr_step_decay,
 )
 
 AVAILABLE_MODELS = ["resnet50"]
@@ -45,8 +46,8 @@ class Trainer:
         # self.train_accuracy_arr = []
         self.test_accuracy_arr = []
 
-        # Init callbacks array
-        self.callbacks_arr = []
+        # Init callbacks array with learning rate scheduler
+        self.callbacks_arr = [tf.keras.callbacks.LearningRateScheduler(lr_step_decay)]
 
         self.model_type = model_type
         self.model_args = model_args
@@ -90,7 +91,6 @@ class Trainer:
             # If the model is a resnet-50, the input should be expanded
             # Because ResNet expects a 3D shape
             if self.model_type == "resnet50":
-                # TODO: Should check whether using mel spec or mfcc
                 x_folds = expand_mel_spec(x_folds)
                 x_test = expand_mel_spec(x_test)
 
@@ -98,8 +98,10 @@ class Trainer:
             y_folds = encode_label(y_folds, "COVID-19")
             y_test = encode_label(y_test, "COVID-19")
 
-            ic(folds_index[:50])
-            ic(test_index[:50])
+            ic(np.unique(y_folds, return_counts=True))
+            ic(np.unique(y_test, return_counts=True))
+            ic(folds_index[:10])
+            ic(test_index[:10])
 
             model = self.generate_model().build_model()
 
@@ -120,6 +122,8 @@ class Trainer:
                 epochs=epochs,
                 batch_size=batch_size,
                 callbacks=[*self.callbacks_arr, *additional_callbacks],
+                shuffle=True,
+                verbose=2,
             )
 
             # Evaluate model for outer loop
@@ -137,6 +141,9 @@ class Trainer:
         print(f"AUC-ROC average: {np.mean(self.test_metrics_arr)}")
         print(f"Accuracy average: {np.mean(self.test_accuracy_arr)}")
         print(f"Loss average: {np.mean(self.test_losses_arr)}")
+        print(f"AUC-ROC std: {np.std(self.test_metrics_arr)}")
+        print(f"Accuracy std: {np.std(self.test_accuracy_arr)}")
+        print(f"Loss std: {np.std(self.test_losses_arr)}")
 
     def generate_model(self):
         """

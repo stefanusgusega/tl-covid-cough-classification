@@ -40,16 +40,16 @@ class ResNet50Model(BaseModel):
         model = tf.keras.layers.Dense(512, activation="relu")(model)
         model = tf.keras.layers.Dropout(rate=0.2)(model)
         # model = tf.keras.layers.Activation("relu")(model)
-        model = tf.keras.layers.Dense(256, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.2)(model)
-        # model = tf.keras.layers.Activation("relu")(model)
-
-        model = tf.keras.layers.Dense(128, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.2)(model)
-        # model = tf.keras.layers.Activation("relu")(model)
-
-        # model = tf.keras.layers.Dense(32, activation="relu")(model)
+        # model = tf.keras.layers.Dense(256, activation="relu")(model)
         # model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # # model = tf.keras.layers.Activation("relu")(model)
+
+        # model = tf.keras.layers.Dense(128, activation="relu")(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Activation("relu")(model)
+
+        model = tf.keras.layers.Dense(32, activation="relu")(model)
+        model = tf.keras.layers.Dropout(rate=0.2)(model)
         # model = tf.keras.layers.Activation("relu")(model)
 
         model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
@@ -57,6 +57,10 @@ class ResNet50Model(BaseModel):
         model = tf.keras.models.Model(
             inputs=input_tensor, outputs=model, name="ResNet50"
         )
+
+        # lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        #     initial_learning_rate=1e-3, decay_steps=1000, decay_rate=0.95
+        # )
 
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
@@ -68,6 +72,6 @@ class ResNet50Model(BaseModel):
         # Save to attribute
         self.model = model
 
-        # print(self.model.summary())
+        print(self.model.summary())
 
         return model
