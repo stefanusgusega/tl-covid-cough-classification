@@ -1,6 +1,7 @@
 """
 Model util functions that should not be in one class.
 """
+import math
 import os
 import tensorflow as tf
 from src.model.resnet50 import ResNet50Model, resnet50_block
@@ -52,3 +53,11 @@ def generate_tensorboard_callback(log_dir: str):
     specified_log_dir = os.path.join(log_dir, generate_now_datetime())
 
     return tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
+
+
+def lr_step_decay(epoch, learning_rate):
+    # initial_learning_rate = 1e-3
+    drop_rate = 0.95
+    epochs_drop = 10.0
+
+    return learning_rate * math.pow(drop_rate, math.floor(epoch / epochs_drop))
