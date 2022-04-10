@@ -25,10 +25,8 @@ class Flooding(tf.keras.losses.Loss):
     def call(self, y_true, y_pred):
         bce = tf.keras.losses.BinaryCrossentropy()
         loss = bce(y_true, y_pred)
-        # ic(loss)
-        b = self.flooding_level
 
-        return tf.math.abs(loss - b) + b  # b is the flooding level.
+        return tf.math.abs(loss - self.flooding_level) + self.flooding_level
 
 
 class ResNet50Model(BaseModel):
