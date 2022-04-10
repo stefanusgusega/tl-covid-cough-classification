@@ -9,7 +9,7 @@ from src.model import ResNet50Model
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
     generate_tensorboard_callback,
-    lr_step_decay,
+    # lr_step_decay,
 )
 
 AVAILABLE_MODELS = ["resnet50"]
@@ -47,7 +47,9 @@ class Trainer:
         self.test_accuracy_arr = []
 
         # Init callbacks array with learning rate scheduler
-        self.callbacks_arr = [tf.keras.callbacks.LearningRateScheduler(lr_step_decay)]
+        self.callbacks_arr = [
+            # tf.keras.callbacks.LearningRateScheduler(lr_step_decay)
+        ]
 
         self.model_type = model_type
         self.model_args = model_args
@@ -138,6 +140,9 @@ class Trainer:
             # Save accuracy
             self.test_accuracy_arr.append(acc)
 
+            # Limit to only once
+            break
+
         print(f"AUC-ROC average: {np.mean(self.test_metrics_arr)}")
         print(f"Accuracy average: {np.mean(self.test_accuracy_arr)}")
         print(f"Loss average: {np.mean(self.test_losses_arr)}")
@@ -162,7 +167,9 @@ class Trainer:
         # Append checkpoint callback
         self.callbacks_arr.append(
             tf.keras.callbacks.ModelCheckpoint(
-                filepath=checkpoint_path, save_weights_only=save_weights_only
+                filepath=checkpoint_path,
+                save_weights_only=save_weights_only,
+                save_best_only=True,
             )
         )
 
@@ -170,4 +177,6 @@ class Trainer:
         """
         Set the early stopping callback for fitting the model
         """
-        self.callbacks_arr.append(tf.keras.callbacks.EarlyStopping(monitor="val_loss"))
+        self.callbacks_arr.append(
+            tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5)
+        )

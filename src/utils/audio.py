@@ -327,6 +327,7 @@ def extract_melspec(
     audio_datas: np.ndarray,
     sampling_rate: int,
     is_normalize: bool = True,
+    in_db: bool = True,
     var_norm: bool = False,
     **kwargs,
 ) -> np.ndarray:
@@ -341,8 +342,11 @@ def extract_melspec(
             audio, sr=sampling_rate, window=signal.windows.hamming, **kwargs
         )
 
-        # Change to decibels instead of power spectrogram
-        log_mel_spec = librosa.power_to_db(mel_spec)
+        if in_db:
+            # Change to decibels instead of power spectrogram
+            log_mel_spec = librosa.power_to_db(mel_spec)
+        else:
+            log_mel_spec = mel_spec
 
         if is_normalize:
             normalized = cmvnw(np.array(log_mel_spec), variance_normalization=var_norm)

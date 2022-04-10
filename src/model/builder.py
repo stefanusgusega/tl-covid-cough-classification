@@ -4,6 +4,9 @@ This is the model builder module.
 
 import tensorflow as tf
 
+# KERNEL_PENALTY = 5e-5
+# print(f"L2: {KERNEL_PENALTY}")
+
 
 def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
     """
@@ -32,6 +35,7 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
         padding="valid",
         name=f"{conv_name_base}2a",
         kernel_initializer="glorot_uniform",
+        # kernel_regularizer=tf.keras.regularizers.L2(KERNEL_PENALTY),
     )(input_tensor)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2a")(model)
     model = tf.keras.layers.Activation("relu")(model)
@@ -44,6 +48,7 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
         padding="same",
         name=f"{conv_name_base}2b",
         kernel_initializer="glorot_uniform",
+        # kernel_regularizer=tf.keras.regularizers.L2(KERNEL_PENALTY),
     )(model)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2b")(model)
     model = tf.keras.layers.Activation("relu")(model)
@@ -56,6 +61,7 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
         padding="valid",
         name=f"{conv_name_base}2c",
         kernel_initializer="glorot_uniform",
+        # kernel_regularizer=tf.keras.regularizers.L2(KERNEL_PENALTY),
     )(model)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2c")(model)
 
@@ -147,7 +153,11 @@ def resnet50_block(input_tensor: tf.keras.layers.Input):
 
     # conv1
     model = tf.keras.layers.Conv2D(
-        64, (7, 7), strides=(2, 2), name="conv1", kernel_initializer="glorot_uniform"
+        64,
+        (7, 7),
+        strides=(2, 2),
+        name="conv1",
+        kernel_initializer="glorot_uniform",
     )(model)
     model = tf.keras.layers.BatchNormalization(axis=3, name="bn_conv1")(model)
     model = tf.keras.layers.Activation("relu")(model)

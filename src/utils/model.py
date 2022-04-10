@@ -55,9 +55,9 @@ def generate_tensorboard_callback(log_dir: str):
     return tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
 
 
-def lr_step_decay(epoch, learning_rate):
-    # initial_learning_rate = 1e-3
-    drop_rate = 0.95
+def lr_step_decay(epoch, _):
+    initial_learning_rate = 5e-3
+    drop_rate = 0.5
     epochs_drop = 10.0
 
-    return learning_rate * math.pow(drop_rate, math.floor(epoch / epochs_drop))
+    return initial_learning_rate * math.pow(drop_rate, math.floor(epoch / epochs_drop))

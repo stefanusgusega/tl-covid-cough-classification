@@ -1,10 +1,34 @@
 """
 ResNet50Model class.
 """
+# from icecream import ic
 from typing import Tuple
+
+# import numpy as np
 import tensorflow as tf
 from src.model.base import BaseModel
 from src.model.builder import resnet50_block
+
+# Enable tensorflow math module
+tf.compat.v1.enable_eager_execution()
+
+
+class Flooding(tf.keras.losses.Loss):
+    """
+    Custom Loss
+    """
+
+    def __init__(self, flooding_level: float = 0.1):
+        super().__init__()
+        self.flooding_level = flooding_level
+
+    def call(self, y_true, y_pred):
+        bce = tf.keras.losses.BinaryCrossentropy()
+        loss = bce(y_true, y_pred)
+        # ic(loss)
+        b = self.flooding_level
+
+        return tf.math.abs(loss - b) + b  # b is the flooding level.
 
 
 class ResNet50Model(BaseModel):
@@ -33,12 +57,12 @@ class ResNet50Model(BaseModel):
         model = resnet50_block(input_tensor=input_tensor)
 
         # The top layer of ResNet
-        model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
-        model = tf.keras.layers.Flatten()(model)
+        model = tf.keras.layers.GlobalAveragePooling2D(name="avg_pool")(model)
+        # model = tf.keras.layers.Flatten()(model)
 
         # The fully connected layers
         model = tf.keras.layers.Dense(512, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
         # model = tf.keras.layers.Activation("relu")(model)
         # model = tf.keras.layers.Dense(256, activation="relu")(model)
         # model = tf.keras.layers.Dropout(rate=0.2)(model)
@@ -49,7 +73,7 @@ class ResNet50Model(BaseModel):
         # model = tf.keras.layers.Activation("relu")(model)
 
         model = tf.keras.layers.Dense(32, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
         # model = tf.keras.layers.Activation("relu")(model)
 
         model = tf.keras.layers.Dense(1, activation="sigmoid")(model)
@@ -65,7 +89,8 @@ class ResNet50Model(BaseModel):
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
             # optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
-            loss=tf.keras.losses.BinaryCrossentropy(),
+            loss=Flooding(),
+            # loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=metrics,
         )
 

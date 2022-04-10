@@ -46,6 +46,8 @@ trainer = Trainer(
     model_args=model_args,
     tensorboard_log_dir=LOG_PATH,
 )
+# trainer.set_early_stopping_callback()
+trainer.set_checkpoint_callback(DUMP_PATH)
 
 trainer.train(epochs=epochs, batch_size=batch_size)
 
