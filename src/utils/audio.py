@@ -3,6 +3,7 @@ Audio util functions.
 """
 
 import os
+from audioread.exceptions import NoBackendError
 from typing import Tuple
 from speechpy.processing import cmvnw
 import numpy as np
@@ -170,7 +171,7 @@ def convert_audio_to_numpy(
                     f"{specific_ckpt_folder_name}/numpy_data.pkl",
                 ),
             )
-        except (ValueError, FileNotFoundError, RuntimeError) as e:
+        except (ValueError, FileNotFoundError, RuntimeError, NoBackendError) as e:
             print(f"Error occured on idx {idx}: {str(e)}")
 
     return np.array(samples), np.array(statuses)
