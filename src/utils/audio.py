@@ -13,7 +13,7 @@ from scipy import signal
 from tqdm import tqdm
 from src.utils.chore import create_folder, save_obj_to_pkl
 
-AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg", "flac"]
+AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg", "flac", "m4a"]
 
 
 def generate_cough_segments(
