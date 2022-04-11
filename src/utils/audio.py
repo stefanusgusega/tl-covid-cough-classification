@@ -170,7 +170,7 @@ def convert_audio_to_numpy(
                     f"{specific_ckpt_folder_name}/numpy_data.pkl",
                 ),
             )
-        except (ValueError, FileNotFoundError) as e:
+        except (ValueError, FileNotFoundError, RuntimeError) as e:
             print(f"Error occured on idx {idx}: {str(e)}")
 
     return np.array(samples), np.array(statuses)
