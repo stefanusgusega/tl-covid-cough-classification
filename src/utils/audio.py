@@ -3,8 +3,8 @@ Audio util functions.
 """
 
 import os
-from audioread.exceptions import NoBackendError
 from typing import Tuple
+from audioread.exceptions import NoBackendError
 from speechpy.processing import cmvnw
 import numpy as np
 import pandas as pd
