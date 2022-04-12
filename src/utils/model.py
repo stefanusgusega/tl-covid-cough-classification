@@ -55,6 +55,18 @@ def generate_tensorboard_callback(log_dir: str):
     return tf.keras.callbacks.TensorBoard(log_dir=specified_log_dir)
 
 
+def generate_checkpoint_callback(parent_dir: str):
+    """
+    Generate a checkpoint callback.
+    For details : https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint
+    """
+    specified_ckpt_dir = os.path.join(parent_dir, generate_now_datetime())
+
+    return tf.keras.callbacks.ModelCheckpoint(
+        filepath=specified_ckpt_dir, save_best_only=True
+    )
+
+
 def lr_step_decay(epoch, _):
     initial_learning_rate = 5e-3
     drop_rate = 0.5

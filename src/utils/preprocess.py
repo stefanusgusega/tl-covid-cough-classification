@@ -123,7 +123,7 @@ class Preprocessor:
 
         return self.current_data, self.current_labels
 
-    def segment_audio(self, sampling_rate: int = 16000):
+    def segment_audio(self, sampling_rate: int = 16000, sound_kind: str = "cough"):
         assert self.current_state == "converted"
 
         try:
@@ -139,6 +139,7 @@ class Preprocessor:
                 checkpoint_folder_path=self.pickle_folder,
                 checkpoint=self.checkpoints["segment"],
                 sampling_rate=sampling_rate,
+                sound_kind=sound_kind,
             )
 
             if self.backup_every_stage:
@@ -244,8 +245,7 @@ class Preprocessor:
         return res
 
     def first_run(
-        self,
-        sampling_rate: int = 16000,
+        self, sampling_rate: int = 16000, sound_kind: str = "cough"
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         This is the process of preprocessing that should be
@@ -255,7 +255,7 @@ class Preprocessor:
         # ! Just do until segment audio
         # ! and then produce the segmented audio
         self.convert_to_numpy(sampling_rate=sampling_rate)
-        self.segment_audio(sampling_rate=sampling_rate)
+        self.segment_audio(sampling_rate=sampling_rate, sound_kind=sound_kind)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
         return self.current_data, self.current_labels

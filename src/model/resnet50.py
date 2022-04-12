@@ -87,8 +87,8 @@ class ResNet50Model(BaseModel):
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
             # optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
-            loss=Flooding(),
-            # loss=tf.keras.losses.BinaryCrossentropy(),
+            # loss=Flooding(),
+            loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=metrics,
         )
 

@@ -10,6 +10,7 @@ from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
+CHECKPOINT_PATH = os.path.join(DUMP_PATH, "checkpoints")
 
 
 sys.stdout = open(
@@ -39,15 +40,15 @@ print(f"Batch size: {batch_size}")
 print(f"Feature file: {FEATURE_FILE}")
 
 model_args = {"input_shape": (X_train.shape[1], X_train.shape[2], 1)}
+log_dir = dict(tensorboard=LOG_PATH, checkpoint=CHECKPOINT_PATH)
 
 trainer = Trainer(
     audio_datas=X_train,
     audio_labels=y_train,
     model_args=model_args,
-    tensorboard_log_dir=LOG_PATH,
+    log_dir=log_dir,
 )
 # trainer.set_early_stopping_callback()
-trainer.set_checkpoint_callback(os.path.join(DUMP_PATH, "checkpoints"))
 
 trainer.train(epochs=epochs, batch_size=batch_size)
 

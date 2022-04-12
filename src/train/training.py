@@ -8,6 +8,7 @@ import tensorflow as tf
 from src.model import ResNet50Model
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
+    generate_checkpoint_callback,
     generate_tensorboard_callback,
     # lr_step_decay,
 )
@@ -24,9 +25,9 @@ class Trainer:
         self,
         audio_datas: np.ndarray,
         audio_labels: np.ndarray,
+        log_dir: dict,
         model_type: str = "resnet50",
         model_args: dict = None,
-        tensorboard_log_dir: str = None,
     ) -> None:
         # If not one of available models, throw an exception
         if model_type not in AVAILABLE_MODELS:
@@ -54,12 +55,9 @@ class Trainer:
         self.model_type = model_type
         self.model_args = model_args
 
+        self.log_dir = log_dir
+
         self.using_tensorboard = False
-
-        if tensorboard_log_dir is not None:
-            self.using_tensorboard = True
-
-        self.tensorboard_log_dir = tensorboard_log_dir
 
     def train(
         self,
@@ -110,12 +108,13 @@ class Trainer:
             # Training for this fold
             print(f"Training for fold {outer_idx+1}/{n_splits}...")
 
-            # Always reset the TensorBoard callback
-            # whenever using TensorBoard
-            additional_callbacks = []
-            if self.using_tensorboard:
-                tb_callback = generate_tensorboard_callback(self.tensorboard_log_dir)
-                additional_callbacks.append(tb_callback)
+            # Init dynamic callbacks list. Dynamic means should take different actions
+            # every fold. For example, checkpoint for each fold, tensorboard for each fold.
+            # Init with checkpoint callback and tensorboard callback
+            dynamic_callbacks = [
+                generate_tensorboard_callback(self.log_dir["tensorboard"]),
+                generate_checkpoint_callback(self.log_dir["checkpoint"]),
+            ]
 
             model.fit(
                 x_folds,
@@ -123,7 +122,7 @@ class Trainer:
                 validation_data=(x_test, y_test),
                 epochs=epochs,
                 batch_size=batch_size,
-                callbacks=[*self.callbacks_arr, *additional_callbacks],
+                callbacks=[*self.callbacks_arr, *dynamic_callbacks],
                 shuffle=True,
                 verbose=2,
             )
@@ -141,7 +140,7 @@ class Trainer:
             self.test_accuracy_arr.append(acc)
 
             # Limit to only once
-            break
+            # break
 
         print(f"AUC-ROC average: {np.mean(self.test_metrics_arr)}")
         print(f"Accuracy average: {np.mean(self.test_accuracy_arr)}")
@@ -158,20 +157,6 @@ class Trainer:
             model = ResNet50Model(**self.model_args)
 
         return model
-
-    def set_checkpoint_callback(self, checkpoint_path: str, save_weights_only=True):
-        """
-        Set the checkpoint callback for fitting the model
-        """
-
-        # Append checkpoint callback
-        self.callbacks_arr.append(
-            tf.keras.callbacks.ModelCheckpoint(
-                filepath=checkpoint_path,
-                save_weights_only=save_weights_only,
-                save_best_only=True,
-            )
-        )
 
     def set_early_stopping_callback(self):
         """
