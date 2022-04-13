@@ -40,3 +40,9 @@ pip install -r requirements.txt
 ```bash
 pre-commit install
 ```
+
+## TensorBoard
+
+```bash
+tensorboard --logdir 'dumps/logs'
+```
