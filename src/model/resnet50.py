@@ -47,7 +47,10 @@ class ResNet50Model(BaseModel):
 
     def build_model(self, metrics=None, n_classes: int = 2):
         if metrics is None:
-            metrics = [tf.keras.metrics.AUC(), "accuracy"]
+            metrics = [
+                tf.keras.metrics.AUC(),
+                "accuracy",
+            ]
 
         input_tensor = tf.keras.layers.Input(shape=self.input_shape)
 
@@ -85,7 +88,7 @@ class ResNet50Model(BaseModel):
         # )
 
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=5e-5, epsilon=None),
             # optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
             # loss=Flooding(),
             loss=tf.keras.losses.BinaryCrossentropy(),

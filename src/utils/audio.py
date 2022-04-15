@@ -90,7 +90,7 @@ def generate_cough_segments(
     return cough_segments, cough_mask
 
 
-def convert_audio_to_numpy(
+def convert_audio_from_df(
     df: pd.DataFrame,
     audio_folder_path: str,
     checkpoint_folder_path: str,
@@ -175,6 +175,60 @@ def convert_audio_to_numpy(
             print(f"Error occured on idx {idx}: {str(e)}")
 
     return np.array(samples), np.array(statuses)
+
+
+def convert_audio_from_folder(
+    audio_folder_path: str,
+    sampling_rate: int = 16000,
+    name: str = None,
+    checkpoint: dict = None,
+    checkpoint_folder_path: str = None,
+):
+    # If name is not specified, then set it with the name of the folder
+    if name is None:
+        name = os.path.basename(audio_folder_path)
+
+    # Check if checkpoint is isn't specified or the keys are incomplete,
+    # Apply defaults
+    if checkpoint is None or set(checkpoint.keys()) != set(["datas", "last_index"]):
+        checkpoint = dict(datas=[], last_index=-1)
+
+    samples = list(checkpoint["datas"])
+
+    # Create new folder to save checkpoint
+    specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data_ckpt")
+    samples = []
+
+    for idx, audio_file in enumerate(
+        os.listdir(audio_folder_path)[checkpoint["last_index"] + 1 :]
+    ):
+        # If not an audio file, skip to next file
+        if audio_file.split(".")[-1] not in AUDIO_EXTENSIONS:
+            continue
+
+        try:
+            # Sampling rate is not returned because it will make worse memory usage
+            audio_data, _ = librosa.load(
+                os.path.join(audio_folder_path, audio_file), sr=sampling_rate
+            )
+
+            samples.append(audio_data)
+
+            # Save the backup to the created specific checkpoint folder
+            save_obj_to_pkl(
+                dict(
+                    datas=np.array(samples),
+                    last_index=idx,
+                ),
+                os.path.join(
+                    checkpoint_folder_path,
+                    f"{specific_ckpt_folder_name}/numpy_data.pkl",
+                ),
+            )
+        except (ValueError, FileNotFoundError, RuntimeError, NoBackendError) as e:
+            print(f"Error occured on idx {idx}: {str(e)}")
+
+    return np.array(samples), np.full((len(samples),), name)
 
 
 def segment_cough_and_label(

@@ -8,7 +8,8 @@ import pandas as pd
 from keras.utils.np_utils import to_categorical
 from imblearn.under_sampling import RandomUnderSampler
 from src.utils.audio import (
-    convert_audio_to_numpy,
+    convert_audio_from_df,
+    convert_audio_from_folder,
     equalize_audio_duration,
     extract_melspec,
     generate_segmented_data,
@@ -94,7 +95,7 @@ class Preprocessor:
             )
             print("Numpy data loaded.")
         except FileNotFoundError:
-            numpy_data, labels = convert_audio_to_numpy(
+            numpy_data, labels = convert_audio_from_df(
                 self.df,
                 audio_folder_path=self.audio_folder_path,
                 checkpoint_folder_path=self.pickle_folder,
@@ -274,4 +275,42 @@ class Preprocessor:
         self.extract(**kwargs)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
+        return self.current_data, self.current_labels
+
+
+class FreesoundPreprocessor(Preprocessor):
+    """
+    Preprocessor for FreeSound data
+    """
+
+    def convert_to_numpy(self, sampling_rate: int = 16000):
+        assert self.current_state == "initialized"
+
+        try:
+            print("Loading numpy data from 'numpy_data.pkl'...")
+            numpy_data, labels = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "numpy_data.pkl")
+            )
+            print("Numpy data loaded.")
+        except FileNotFoundError:
+            numpy_data, labels = convert_audio_from_folder(
+                self.audio_folder_path,
+                sampling_rate=sampling_rate,
+                checkpoint_folder_path=self.pickle_folder,
+                checkpoint=self.checkpoints["numpy_data"],
+            )
+
+            if self.backup_every_stage:
+                print("Creating backup for numpy data...")
+                save_obj_to_pkl(
+                    (numpy_data, labels),
+                    os.path.join(self.pickle_folder, "numpy_data.pkl"),
+                )
+                print("Backup for numpy data created.")
+
+        # Update state
+        self.current_data = numpy_data
+        self.current_labels = labels
+        self.current_state = "converted"
+
         return self.current_data, self.current_labels
