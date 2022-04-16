@@ -14,7 +14,7 @@ from scipy import signal
 from tqdm import tqdm
 from src.utils.chore import create_folder, save_obj_to_pkl
 
-AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg", "flac", "m4a"]
+AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg", "flac", "m4a", "aiff"]
 
 
 def generate_cough_segments(
@@ -199,8 +199,8 @@ def convert_audio_from_folder(
     specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "numpy_data_ckpt")
     samples = []
 
-    for idx, audio_file in enumerate(
-        os.listdir(audio_folder_path)[checkpoint["last_index"] + 1 :]
+    for idx, audio_file in tqdm(
+        enumerate(os.listdir(audio_folder_path)[checkpoint["last_index"] + 1 :])
     ):
         # If not an audio file, skip to next file
         if audio_file.split(".")[-1] not in AUDIO_EXTENSIONS:
