@@ -123,7 +123,7 @@ def generate_sneeze_segments(
         new_non_silent_indices = non_silent_indices
 
     # Convert padding to number of samples
-    padding_samples = padding * sampling_rate
+    padding_samples = round(padding * sampling_rate)
 
     # Init sneeze segments array
     sneeze_segments = []
