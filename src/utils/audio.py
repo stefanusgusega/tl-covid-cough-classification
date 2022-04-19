@@ -289,7 +289,7 @@ def segment_cough_and_label(
     if sound_kind == "cough":
         cough_segments, _ = generate_cough_segments(original_audio, sampling_rate)
     elif sound_kind == "sneeze":
-        cough_segments, _ = generate_sneeze_segments(original_audio, sampling_rate)
+        cough_segments = generate_sneeze_segments(original_audio, sampling_rate)
     segments = [np.array(segment) for segment in cough_segments]
 
     return np.array(segments), np.full((len(cough_segments),), covid_status)
