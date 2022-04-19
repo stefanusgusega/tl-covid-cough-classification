@@ -25,3 +25,7 @@ def save_obj_to_pkl(to_save, file_path):
 def load_obj_from_pkl(file_path):
     with (open(file_path, "rb")) as f:
         return pkl.load(f)
+
+
+def diff(first_num, second_num):
+    return abs(first_num - second_num)

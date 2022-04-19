@@ -10,9 +10,10 @@ import numpy as np
 import pandas as pd
 import librosa
 from audiomentations import TimeStretch, Gain, Compose
+from icecream import ic
 from scipy import signal
 from tqdm import tqdm
-from src.utils.chore import create_folder, save_obj_to_pkl
+from src.utils.chore import create_folder, diff, save_obj_to_pkl
 
 AUDIO_EXTENSIONS = ["wav", "mp3", "webm", "ogg", "flac", "m4a", "aiff"]
 
@@ -88,6 +89,54 @@ def generate_cough_segments(
                 cough_in_progress = True
 
     return cough_segments, cough_mask
+
+
+def generate_sneeze_segments(
+    x, sampling_rate: int = 16000, padding: int = 0.1, min_sneeze_len: int = 0.3
+):
+    # First, split the audio based on the top db
+    non_silent_indices = librosa.effects.split(x, top_db=20)
+
+    # Check if the silence duration of each split is below threshold
+    # Threshold set as minimum sneeze len
+    new_non_silent_indices = []
+
+    # Should check if the indices produced more than one indice tuple
+    if len(non_silent_indices) > 1:
+        for idx, (i, j) in enumerate(
+            zip(non_silent_indices[:-1], non_silent_indices[1:])
+        ):
+            # If the difference of end and start between two consecutive segments is below the threshold
+            # Then merge those segments
+            if diff(i[1], j[0]) <= min_sneeze_len * sampling_rate:
+                new_non_silent_indices.append([i[0], j[1]])
+
+            # If not, then just append the element from first array
+            else:
+                new_non_silent_indices.append(i[0], i[1])
+                # If last iteration, then append the element from second array too
+                if idx == len(non_silent_indices) - 1:
+                    new_non_silent_indices.append(j[0], j[1])
+
+    # Convert padding to number of samples
+    padding_samples = padding * sampling_rate
+
+    # Init sneeze segments array
+    sneeze_segments = []
+
+    ic(new_non_silent_indices)
+
+    # Iterate the indices
+    for indice_tuple in np.array(new_non_silent_indices):
+        # Check if the indice reached minimum len
+        if diff(indice_tuple[0], indice_tuple[1]) >= min_sneeze_len * sampling_rate:
+            # Pad the start
+            start = indice_tuple[0] - padding_samples
+            # Pad the end
+            end = indice_tuple[1] + padding_samples
+            sneeze_segments.append(x[max(0, start) : min(len(x), end)])
+
+    return np.array(sneeze_segments)
 
 
 def convert_audio_from_df(
@@ -240,9 +289,7 @@ def segment_cough_and_label(
     if sound_kind == "cough":
         cough_segments, _ = generate_cough_segments(original_audio, sampling_rate)
     elif sound_kind == "sneeze":
-        cough_segments, _ = generate_cough_segments(
-            original_audio, sampling_rate, min_cough_len=0.1
-        )
+        cough_segments, _ = generate_sneeze_segments(original_audio, sampling_rate)
     segments = [np.array(segment) for segment in cough_segments]
 
     return np.array(segments), np.full((len(cough_segments),), covid_status)

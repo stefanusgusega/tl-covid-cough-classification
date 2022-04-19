@@ -47,10 +47,12 @@ class Trainer:
         # self.train_accuracy_arr = []
         self.test_accuracy_arr = []
 
+        # Scheduler
+        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=gamma, patience=patience,
+        #                                                        threshold=0.01, threshold_mode='abs', verbose=True)
+
         # Init callbacks array with learning rate scheduler
-        self.callbacks_arr = [
-            # tf.keras.callbacks.LearningRateScheduler(lr_step_decay)
-        ]
+        self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
 
         self.model_type = model_type
         self.model_args = model_args
