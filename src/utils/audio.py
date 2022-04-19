@@ -109,7 +109,7 @@ def generate_sneeze_segments(
             # If the difference of end and start between two consecutive segments is below the threshold
             # Then merge those segments
             if diff(i[1], j[0]) <= min_sneeze_len * sampling_rate:
-                new_non_silent_indices.append([[i[0], j[1]]])
+                new_non_silent_indices.append([i[0], j[1]])
 
             # If not, then just append the element from first array
             else:
@@ -117,6 +117,10 @@ def generate_sneeze_segments(
                 # If last iteration, then append the element from second array too
                 if idx == len(non_silent_indices) - 1:
                     new_non_silent_indices.append([j[0], j[1]])
+
+    # If not more than one indice tuple, then use the same non silent indices
+    else:
+        new_non_silent_indices = non_silent_indices
 
     # Convert padding to number of samples
     padding_samples = padding * sampling_rate
