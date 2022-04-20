@@ -283,6 +283,25 @@ class FolderDataPreprocessor(Preprocessor):
     Preprocessor for data directly from folder
     """
 
+    def __init__(
+        self,
+        audio_folder_path: str,
+        checkpoints: dict = None,
+        backup_every_stage=True,
+        pickle_folder=None,
+        **kwargs
+    ) -> None:
+        super().__init__(
+            df=None,
+            filename_colname=None,
+            label_colname=None,
+            audio_folder_path=audio_folder_path,
+            checkpoints=checkpoints,
+            backup_every_stage=backup_every_stage,
+            pickle_folder=pickle_folder,
+            **kwargs
+        )
+
     def convert_to_numpy(self, sampling_rate: int = 16000):
         assert self.current_state == "initialized"
 
