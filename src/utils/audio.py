@@ -92,7 +92,11 @@ def generate_cough_segments(
 
 
 def generate_sneeze_segments(
-    x, sampling_rate: int = 16000, padding: int = 0.1, min_sneeze_len: int = 0.3
+    x,
+    sampling_rate: int = 16000,
+    padding: float = 0.1,
+    min_sneeze_len: float = 0.3,
+    max_sneeze_len: float = 1.0,
 ):
     # First, split the audio based on the top db
     non_silent_indices = librosa.effects.split(x, top_db=20)
@@ -132,8 +136,12 @@ def generate_sneeze_segments(
 
     # Iterate the indices
     for indice_tuple in np.array(new_non_silent_indices):
-        # Check if the indice reached minimum len
-        if diff(indice_tuple[0], indice_tuple[1]) >= min_sneeze_len * sampling_rate:
+        # Check if the indice is in range [min, max]
+        if (
+            diff(indice_tuple[0], indice_tuple[1]) >= min_sneeze_len * sampling_rate
+        ) and (
+            diff(indice_tuple[0], indice_tuple[1]) <= max_sneeze_len * sampling_rate
+        ):
             # Pad the start
             start = indice_tuple[0] - padding_samples
             # Pad the end
