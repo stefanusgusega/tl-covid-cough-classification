@@ -133,6 +133,7 @@ def generate_sneeze_segments(
     sneeze_segments = []
 
     ic(new_non_silent_indices)
+    ic.disable()
 
     # Iterate the indices
     for indice_tuple in np.array(new_non_silent_indices):
