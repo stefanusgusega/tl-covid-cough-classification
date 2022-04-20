@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import librosa
 from audiomentations import TimeStretch, Gain, Compose
-from icecream import ic
 from scipy import signal
 from tqdm import tqdm
 from src.utils.chore import create_folder, diff, save_obj_to_pkl
@@ -96,7 +95,6 @@ def generate_sneeze_segments(
     sampling_rate: int = 16000,
     padding: float = 0.1,
     min_sneeze_len: float = 0.3,
-    max_sneeze_len: float = 1.0,
 ):
     # First, split the audio based on the top db
     non_silent_indices = librosa.effects.split(x, top_db=20)
@@ -132,17 +130,12 @@ def generate_sneeze_segments(
     # Init sneeze segments array
     sneeze_segments = []
 
-    ic(new_non_silent_indices)
-    ic.disable()
+    # ic(new_non_silent_indices)
 
     # Iterate the indices
     for indice_tuple in np.array(new_non_silent_indices):
-        # Check if the indice is in range [min, max]
-        if (
-            diff(indice_tuple[0], indice_tuple[1]) >= min_sneeze_len * sampling_rate
-        ) and (
-            diff(indice_tuple[0], indice_tuple[1]) <= max_sneeze_len * sampling_rate
-        ):
+        # Check if the indice reached the minimum len
+        if diff(indice_tuple[0], indice_tuple[1]) >= min_sneeze_len * sampling_rate:
             # Pad the start
             start = indice_tuple[0] - padding_samples
             # Pad the end
