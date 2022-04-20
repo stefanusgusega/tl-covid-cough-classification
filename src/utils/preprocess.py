@@ -278,9 +278,9 @@ class Preprocessor:
         return self.current_data, self.current_labels
 
 
-class FreesoundPreprocessor(Preprocessor):
+class FolderDataPreprocessor(Preprocessor):
     """
-    Preprocessor for FreeSound data
+    Preprocessor for data directly from folder
     """
 
     def convert_to_numpy(self, sampling_rate: int = 16000):
