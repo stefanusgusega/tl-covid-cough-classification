@@ -117,7 +117,8 @@ def generate_sneeze_segments(
             else:
                 new_non_silent_indices.append([i[0], i[1]])
                 # If last iteration, then append the element from second array too
-                if idx == len(non_silent_indices) - 1:
+                # So, subtract by 2, because zipping and index starts from 0
+                if idx == len(non_silent_indices) - 2:
                     new_non_silent_indices.append([j[0], j[1]])
 
     # If not more than one indice tuple, then use the same non silent indices
