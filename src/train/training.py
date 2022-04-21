@@ -1,11 +1,14 @@
 """
 Trainer module.
 """
+import os
+import warnings
 import numpy as np
 from icecream import ic
 from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
 from src.model import ResNet50Model
+from src.utils.chore import generate_now_datetime
 from src.utils.preprocess import encode_label, expand_mel_spec
 from src.utils.model import (
     generate_checkpoint_callback,
@@ -47,9 +50,8 @@ class Trainer:
         # self.train_accuracy_arr = []
         self.test_accuracy_arr = []
 
-        # Scheduler
-        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=gamma, patience=patience,
-        #                                                        threshold=0.01, threshold_mode='abs', verbose=True)
+        # Init array to save models for each fold
+        self.models = []
 
         # Init callbacks array with learning rate scheduler
         self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
@@ -71,11 +73,10 @@ class Trainer:
         Train the model
         """
 
-        # The outer is to split between data and test
-        outer_skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
-        for outer_idx, (folds_index, test_index) in enumerate(
-            outer_skf.split(self.x_full, self.y_full)
+        for idx, (folds_index, test_index) in enumerate(
+            skf.split(self.x_full, self.y_full)
         ):
             # Shuffle the index produced
             np.random.shuffle(folds_index)
@@ -108,7 +109,7 @@ class Trainer:
             model = self.generate_model().build_model()
 
             # Training for this fold
-            print(f"Training for fold {outer_idx+1}/{n_splits}...")
+            print(f"Training for fold {idx+1}/{n_splits}...")
 
             # Init dynamic callbacks list. Dynamic means should take different actions
             # every fold. For example, checkpoint for each fold, tensorboard for each fold.
@@ -117,6 +118,9 @@ class Trainer:
                 generate_tensorboard_callback(self.log_dir["tensorboard"]),
                 generate_checkpoint_callback(self.log_dir["checkpoint"]),
             ]
+
+            # if idx != 4:
+            #     continue
 
             model.fit(
                 x_folds,
@@ -130,7 +134,7 @@ class Trainer:
             )
 
             # Evaluate model for outer loop
-            print(f"Evaluating model fold {outer_idx + 1}/{n_splits}...")
+            print(f"Evaluating model fold {idx + 1}/{n_splits}...")
             # Accuracy from Keras seems inaccurate
             loss, auc, acc = model.evaluate(x_test, y_test)
 
@@ -140,6 +144,9 @@ class Trainer:
 
             # Save accuracy
             self.test_accuracy_arr.append(acc)
+
+            # Last save the model
+            self.models.append(model)
 
             # Limit to only once
             # break
@@ -167,3 +174,24 @@ class Trainer:
         self.callbacks_arr.append(
             tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5)
         )
+
+    def save_models(self, path_to_save: str, save_format: str = "tf"):
+        """
+        Save the models for each fold.
+        """
+        if save_format not in ["tf", "h5"]:
+            warnings.warn("```save_format``` unavailable. Defaults to None.")
+            save_format = None
+
+        # Prefix for the file name
+        prefix = f"model_{generate_now_datetime()}"
+
+        for idx, model in enumerate(self.models):
+            print(f"Saving model for fold {idx+1}... ({idx+1}/{len(self.models)})")
+            # Define the filename
+            model_filename = os.path.join(path_to_save, f"{prefix}_{idx+1}")
+            # Save the model
+            model.save(model_filename, save_format=save_format)
+            print(
+                f"Model for fold {idx+1} saved at {model_filename} in {save_format} format."
+            )

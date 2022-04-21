@@ -51,5 +51,6 @@ trainer = Trainer(
 # trainer.set_early_stopping_callback()
 
 trainer.train(epochs=epochs, batch_size=batch_size)
+trainer.save_models(path_to_save=os.path.join(DUMP_PATH, "models"))
 
 sys.stdout.close()
