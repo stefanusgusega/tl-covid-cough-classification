@@ -9,7 +9,7 @@ from speechpy.processing import cmvnw
 import numpy as np
 import pandas as pd
 import librosa
-from audiomentations import TimeStretch, Gain, Compose
+from audiomentations import AddGaussianNoise, Gain, Compose, PitchShift
 from scipy import signal
 from tqdm import tqdm
 from src.utils.chore import create_folder, diff, save_obj_to_pkl
@@ -401,7 +401,7 @@ def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:
     return np.array(new_audio_datas)
 
 
-def augment_data(
+def generate_augmented_data(
     audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
 ) -> np.ndarray:
     # Precondition: all datas are from most discriminated data
@@ -414,24 +414,23 @@ def augment_data(
 
     augmented_datas = []
 
-    # Time stretch
-    time_stretch_augment = Compose([TimeStretch(p=1)])
+    # Gaussian Noise
+    gaussian_noise = AddGaussianNoise()
 
     # Gain
-    gain_augment = Compose([Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)])
+    gain = Gain(min_gain_in_db=-6, max_gain_in_db=6)
 
-    # Time stretch + gain
-    ts_gain_augment = Compose(
-        [TimeStretch(p=1), Gain(min_gain_in_db=-6, max_gain_in_db=6, p=1)]
-    )
+    # Pitch
+    pitch = PitchShift(min_semitones=-1, max_semitones=1)
 
-    augment_array = [time_stretch_augment, gain_augment, ts_gain_augment]
+    # Compose
+    composed = Compose([gaussian_noise, gain, pitch])
 
     print("Augmenting data...")
 
     for _ in tqdm(range(n_aug)):
         random_audio_data = audio_datas[np.random.choice(len(audio_datas))]
-        aug = np.random.choice(augment_array)(
+        aug = np.random.choice(composed)(
             samples=random_audio_data, sample_rate=sampling_rate
         )
         augmented_datas.append(aug)

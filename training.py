@@ -12,6 +12,7 @@ DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 CHECKPOINT_PATH = os.path.join(DUMP_PATH, "checkpoints")
 
+# os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
 sys.stdout = open(
     os.path.join("logs", "coughvid", f"{generate_now_datetime()}.txt"),

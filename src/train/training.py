@@ -119,7 +119,9 @@ class Trainer:
                 generate_checkpoint_callback(self.log_dir["checkpoint"]),
             ]
 
+            # Train for the 5th fold
             # if idx != 4:
+            #     print(f"Skipping fold {idx+1}...")
             #     continue
 
             model.fit(
