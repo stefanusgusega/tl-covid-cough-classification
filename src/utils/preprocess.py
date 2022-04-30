@@ -270,13 +270,13 @@ class FeatureExtractor(Preprocessor):
     """
 
     def __init__(
-        self, backup_every_stage=True, pickle_folder=None, upsample=False
+        self, backup_every_stage=True, pickle_folder=None, oversample=False
     ) -> None:
         super().__init__(
             backup_every_stage=backup_every_stage, pickle_folder=pickle_folder
         )
 
-        self.upsample = upsample
+        self.oversample = oversample
 
     def equalize_duration(self):
         assert self.current_state == "aggregated"
@@ -314,10 +314,15 @@ class FeatureExtractor(Preprocessor):
             )
             print("Balanced data loaded.")
         except FileNotFoundError:
-            print("Balancing data using undersampling...")
-            balanced_data, balanced_labels = RandomUnderSampler(
-                sampling_strategy="majority", random_state=42
-            ).fit_resample(self.current_data, self.current_labels)
+            if self.oversample:
+                print("Balancing data using data augmentation (oversampling)...")
+                # TODO : oversampling
+
+            else:
+                print("Balancing data using undersampling...")
+                balanced_data, balanced_labels = RandomUnderSampler(
+                    sampling_strategy="majority", random_state=42
+                ).fit_resample(self.current_data, self.current_labels)
             print("Data balanced.")
 
             # Backup the balancing data stage
