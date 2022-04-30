@@ -4,7 +4,8 @@ Trainer module.
 import os
 import warnings
 import numpy as np
-from icecream import ic
+
+# from icecream import ic
 from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
 from src.model import ResNet50Model
@@ -101,10 +102,10 @@ class Trainer:
             y_folds = encode_label(y_folds, "COVID-19")
             y_test = encode_label(y_test, "COVID-19")
 
-            ic(np.unique(y_folds, return_counts=True))
-            ic(np.unique(y_test, return_counts=True))
-            ic(folds_index[:10])
-            ic(test_index[:10])
+            # ic(np.unique(y_folds, return_counts=True))
+            # ic(np.unique(y_test, return_counts=True))
+            # ic(folds_index[:10])
+            # ic(test_index[:10])
 
             model = self.generate_model().build_model()
 
@@ -120,9 +121,9 @@ class Trainer:
             ]
 
             # Train for the 5th fold
-            # if idx != 4:
-            #     print(f"Skipping fold {idx+1}...")
-            #     continue
+            if idx != 4:
+                print(f"Skipping fold {idx+1}...")
+                continue
 
             model.fit(
                 x_folds,

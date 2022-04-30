@@ -64,10 +64,10 @@ class ResNet50Model(BaseModel):
 
         # The fully connected layers
         model = tf.keras.layers.Dense(512, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
         # model = tf.keras.layers.Activation("relu")(model)
         model = tf.keras.layers.Dense(256, activation="relu")(model)
-        model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
         # # model = tf.keras.layers.Activation("relu")(model)
 
         model = tf.keras.layers.Dense(128, activation="relu")(model)
