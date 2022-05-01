@@ -427,13 +427,13 @@ def generate_augmented_data(
     pitch = PitchShift(min_semitones=-1, max_semitones=1)
 
     # Compose
-    augment = Compose([gaussian_noise, gain, pitch])
+    augment = Compose([gaussian_noise, gain, pitch], shuffle=True)
 
     print("Augmenting data...")
 
     for _ in tqdm(range(n_aug), total=n_aug):
         random_audio_data = audio_datas[np.random.choice(len(audio_datas))]
-        ic(type(random_audio_data))
+        ic(random_audio_data.shape)
         aug = augment(samples=random_audio_data, sample_rate=sampling_rate)
         augmented_datas.append(aug)
 
