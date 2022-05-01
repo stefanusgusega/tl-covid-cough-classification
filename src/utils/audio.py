@@ -397,7 +397,9 @@ def equalize_audio_duration(audio_datas: np.ndarray, offset: int = None) -> np.n
         random_start = np.random.randint(0, len(audio_data) - offset)
 
         # Trim it
-        new_audio_datas.append(audio_data[random_start : (random_start + offset)])
+        new_audio_datas.append(
+            audio_data[random_start : (random_start + offset)].astype(np.float32)
+        )
 
     print("Data equalized.")
 
@@ -433,7 +435,7 @@ def generate_augmented_data(
         random_audio_data = audio_datas[np.random.choice(len(audio_datas))]
         # ic(random_audio_data)
         aug = augment(samples=random_audio_data, sample_rate=sampling_rate)
-        augmented_datas.append(aug)
+        augmented_datas.append(aug.astype(np.float32))
 
     return np.array(augmented_datas)
 

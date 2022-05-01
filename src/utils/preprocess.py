@@ -309,7 +309,7 @@ class FeatureExtractor(Preprocessor):
                 print("Backup for equal duration data created.")
 
         # Update the data and state
-        self.current_data = equal_duration_data.astype(dtype=np.float32)
+        self.current_data = equal_duration_data
         self.current_state = "equalized"
 
         return self.current_data, self.current_labels
@@ -381,7 +381,7 @@ class FeatureExtractor(Preprocessor):
                 print("Backup for balanced data created.")
 
         # Update the data, labels, and states
-        self.current_data = balanced_data.astype(np.float32)
+        self.current_data = balanced_data
         self.current_labels = balanced_labels
         self.current_state = "balanced"
 
