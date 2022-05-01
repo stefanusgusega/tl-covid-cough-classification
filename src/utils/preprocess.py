@@ -340,6 +340,10 @@ class FeatureExtractor(Preprocessor):
                 for label, label_count in zip(labels, labels_count):
                     diff_with_most = diff(label_count, most_data)
 
+                    # If no difference with the most of data, then no need for augmentation
+                    if diff_with_most == 0:
+                        continue
+
                     # Get the data of the specified class ONLY
                     indices = np.where(self.current_labels == label)
 
