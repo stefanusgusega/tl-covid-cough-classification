@@ -365,16 +365,17 @@ def generate_segmented_data(
     return np.array(new_data), np.concatenate(labels_data)
 
 
-def equalize_audio_duration(audio_datas: np.ndarray) -> np.ndarray:
-    # Get length of audio by mapping len function
-    audio_length_func = np.vectorize(len)
-    audio_length_arr = audio_length_func(audio_datas)
+def equalize_audio_duration(audio_datas: np.ndarray, offset: int = None) -> np.ndarray:
+    if offset is None:
+        # Get length of audio by mapping len function
+        audio_length_func = np.vectorize(len)
+        audio_length_arr = audio_length_func(audio_datas)
 
-    # Set offset value by higher outlier
-    first_quartile = np.percentile(audio_length_arr, 25)
-    third_quartile = np.percentile(audio_length_arr, 75)
-    iqr = third_quartile - first_quartile
-    offset = round(third_quartile + 1.5 * iqr)
+        # Set offset value by higher outlier
+        first_quartile = np.percentile(audio_length_arr, 25)
+        third_quartile = np.percentile(audio_length_arr, 75)
+        iqr = third_quartile - first_quartile
+        offset = round(third_quartile + 1.5 * iqr)
 
     new_audio_datas = []
 
@@ -440,7 +441,7 @@ def generate_augmented_data(
 
 def extract_melspec(
     audio_datas: np.ndarray,
-    sampling_rate: int,
+    sampling_rate: int = 16000,
     is_normalize: bool = True,
     in_db: bool = True,
     var_norm: bool = False,
@@ -454,7 +455,7 @@ def extract_melspec(
     # For each audio
     for audio in tqdm(audio_datas):
         mel_spec = librosa.feature.melspectrogram(
-            audio, sr=sampling_rate, window=signal.windows.hamming, **kwargs
+            y=audio, sr=sampling_rate, window=signal.windows.hamming, **kwargs
         )
 
         if in_db:
@@ -469,18 +470,4 @@ def extract_melspec(
         else:
             mel_specs.append(log_mel_spec)
 
-        # if is_normalize:
-        #     normalized = min_max_scaler(np.array(log_mel_spec))
-        #     mel_specs.append(normalized)
-        # else:
-        #     mel_specs.append(log_mel_spec)
     return np.array(mel_specs)
-
-
-def min_max_scaler(data: np.ndarray, min_val: float = -1.0, max_val: float = 1.0):
-    maximum = np.max(data)
-    minimum = np.min(data)
-
-    scaled = min_val + (data - minimum) / (maximum - minimum) * (max_val - min_val)
-
-    return scaled

@@ -270,12 +270,19 @@ class FeatureExtractor(Preprocessor):
     """
 
     def __init__(
-        self, backup_every_stage=True, pickle_folder=None, oversample=False
+        self,
+        backup_every_stage=True,
+        pickle_folder=None,
+        offset: int = None,
+        for_training=True,
+        oversample=False,
     ) -> None:
         super().__init__(
             backup_every_stage=backup_every_stage, pickle_folder=pickle_folder
         )
 
+        self.offset = offset
+        self.for_training = for_training
         self.oversample = oversample
 
     def equalize_duration(self):
@@ -288,7 +295,9 @@ class FeatureExtractor(Preprocessor):
             )[0]
             print("Equal duration data loaded.")
         except FileNotFoundError:
-            equal_duration_data = equalize_audio_duration(self.current_data)
+            equal_duration_data = equalize_audio_duration(
+                self.current_data, offset=self.offset
+            )
 
             if self.backup_every_stage:
                 print("Creating backup for equal duration data...")
@@ -343,7 +352,9 @@ class FeatureExtractor(Preprocessor):
 
     def extract(self, **kwargs):
         # Feature extraction
-        assert self.current_state == "balanced"
+        # If current state is balanced, so this is intended for training
+        # If equalized, this is intended for testing
+        assert self.current_state in ["balanced", "equalized"]
 
         try:
             print("Loading features from 'features.pkl'...")
@@ -377,7 +388,10 @@ class FeatureExtractor(Preprocessor):
         self.current_state = "aggregated"
 
         self.equalize_duration()
-        self.balance()
+
+        if self.for_training:
+            self.balance()
+
         self.extract(**kwargs)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too

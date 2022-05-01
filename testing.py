@@ -5,7 +5,9 @@ import argparse
 import os
 import sys
 import tensorflow as tf
+from icecream import ic
 
+from src.utils.preprocess import FeatureExtractor
 from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 
 DUMP_PATH = "dumps"
@@ -29,13 +31,21 @@ MODEL_PREFIX = args.m
 DATA_FILE = os.path.join(DATA_PATH, args.td)
 
 # Loading testing dataset
-X_test, y_test = load_obj_from_pkl(DATA_FILE)
+X_test_raw, y_test_raw = load_obj_from_pkl(DATA_FILE)
 
 # Preprocessing dataset
-
+# TODO : what is the number of offset?
+extractor = FeatureExtractor(
+    pickle_folder=os.path.join(DATA_PATH, "covid-test", "preprocessed"),
+    for_training=False,
+)
+X_test, y_test = extractor.run(
+    X_test_raw, y_test_raw, is_normalize=False, n_mels=64, hop_length=128
+)
 
 # Get all models
 model_paths = [f for f in os.listdir(MODEL_DIR) if f.startswith(MODEL_PREFIX)]
+ic(model_paths)
 
 # Iterate for all models to predict and count classification score
 for model_path in model_paths:
