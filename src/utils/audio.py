@@ -389,7 +389,7 @@ def equalize_audio_duration(audio_datas: np.ndarray, offset: int = None) -> np.n
             padded_data = librosa.util.pad_center(
                 data=np.array(audio_data), size=offset
             )
-            new_audio_datas.append(padded_data)
+            new_audio_datas.append(padded_data.astype(np.float32))
             continue
 
         # Else, trim it
