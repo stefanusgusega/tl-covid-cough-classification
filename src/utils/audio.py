@@ -9,8 +9,9 @@ from speechpy.processing import cmvnw
 import numpy as np
 import pandas as pd
 import librosa
-from audiomentations import AddGaussianNoise, Gain, Compose, PitchShift
-from icecream import ic
+from audiomentations import AddGaussianNoise, Gain, Compose
+
+# from icecream import ic
 from scipy import signal
 from tqdm import tqdm
 from src.utils.chore import create_folder, diff, save_obj_to_pkl
@@ -423,11 +424,8 @@ def generate_augmented_data(
     # Gain
     gain = Gain(min_gain_in_db=-6, max_gain_in_db=6)
 
-    # Pitch
-    pitch = PitchShift()
-
     # Compose
-    augment = Compose([gaussian_noise, gain, pitch], shuffle=True)
+    augment = Compose([gaussian_noise, gain], shuffle=True)
 
     print("Augmenting data...")
 
