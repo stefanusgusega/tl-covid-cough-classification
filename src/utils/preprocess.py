@@ -357,8 +357,12 @@ class FeatureExtractor(Preprocessor):
                     new_labels.append(np.full(shape=(diff_with_most), fill_value=label))
 
                 # Concat with current data and label
-                self.current_data = np.concatenate((self.current_data, new_data))
-                self.current_labels = np.concatenate((self.current_labels, new_labels))
+                self.current_data = np.concatenate(
+                    (self.current_data, np.concatenate(new_data))
+                )
+                self.current_labels = np.concatenate(
+                    (self.current_labels, np.concatenate(new_labels))
+                )
 
             else:
                 print("Balancing data using undersampling...")
