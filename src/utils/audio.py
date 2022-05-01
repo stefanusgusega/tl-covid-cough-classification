@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import librosa
 from audiomentations import AddGaussianNoise, Gain, Compose, PitchShift
+from icecream import ic
 from scipy import signal
 from tqdm import tqdm
 from src.utils.chore import create_folder, diff, save_obj_to_pkl
@@ -406,6 +407,7 @@ def generate_augmented_data(
     audio_datas: np.ndarray, n_aug: int, sampling_rate: int = 16000
 ) -> np.ndarray:
     # Precondition: all datas are from most discriminated data
+    ic(audio_datas.shape)
 
     # Check n_aug is defined
     if n_aug is None:
@@ -431,6 +433,7 @@ def generate_augmented_data(
 
     for _ in tqdm(range(n_aug), total=n_aug):
         random_audio_data = audio_datas[np.random.choice(len(audio_datas))]
+        ic(random_audio_data)
         aug = augment(samples=random_audio_data, sample_rate=sampling_rate)
         augmented_datas.append(aug)
 
