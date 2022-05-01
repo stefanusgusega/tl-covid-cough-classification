@@ -379,7 +379,7 @@ def equalize_audio_duration(audio_datas: np.ndarray, offset: int = None) -> np.n
 
     new_audio_datas = []
 
-    print("Equalizing data...")
+    print(f"Equalizing data with offset={offset} samples...")
 
     for audio_data in tqdm(audio_datas, total=len(audio_datas)):
         # If length less than offset, then center pad it
@@ -429,7 +429,7 @@ def generate_augmented_data(
 
     print("Augmenting data...")
 
-    for _ in tqdm(range(n_aug)):
+    for _ in tqdm(range(n_aug), total=n_aug):
         random_audio_data = audio_datas[np.random.choice(len(audio_datas))]
         aug = augment(samples=random_audio_data, sample_rate=sampling_rate)
         augmented_datas.append(aug)
