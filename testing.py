@@ -4,16 +4,19 @@ Main program for testing model
 import argparse
 import os
 import sys
+import numpy as np
+from sklearn.metrics import accuracy_score, classification_report, f1_score
 import tensorflow as tf
 from icecream import ic
 
-from src.utils.preprocess import FeatureExtractor
+from src.utils.preprocess import FeatureExtractor, encode_label
 from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 MODEL_DIR = os.path.join(DUMP_PATH, "models")
 DATA_PATH = os.path.join(DUMP_PATH, "data")
+OFFSET = 13318
 
 sys.stdout = open(
     os.path.join("logs", "testing", f"{generate_now_datetime()}.txt"),
@@ -34,18 +37,31 @@ DATA_FILE = os.path.join(DATA_PATH, args.td)
 X_test_raw, y_test_raw = load_obj_from_pkl(DATA_FILE)
 
 # Preprocessing dataset
-# TODO : what is the number of offset?
 extractor = FeatureExtractor(
     pickle_folder=os.path.join(DATA_PATH, "covid-test", "preprocessed"),
     for_training=False,
+    offset=OFFSET,
 )
 X_test, y_test = extractor.run(
-    X_test_raw, y_test_raw, is_normalize=False, n_mels=64, hop_length=128
+    X_test_raw,
+    y_test_raw,
+    sampling_rate=16000,
+    win_length=512,
+    hop_length=128,
+    n_mels=64,
+    n_fft=512,
+    is_normalize=False,
 )
 
+# Encode the y_test
+y_test = encode_label(y_test, pos_label="COVID-19")
+# ic(X_test.shape)
 # Get all models
 model_paths = [f for f in os.listdir(MODEL_DIR) if f.startswith(MODEL_PREFIX)]
-ic(model_paths)
+# ic(model_paths)
+accs = []
+f1_scores = []
+aucs = []
 
 # Iterate for all models to predict and count classification score
 for model_path in model_paths:
@@ -55,8 +71,22 @@ for model_path in model_paths:
     # Do prediction
     y_pred = model.predict(X_test)
 
-    print(y_pred)
+    # Make label to 0 and 1
+    y_pred = np.where(y_pred >= 0.5, 1, 0)
+
+    acc = accuracy_score(y_true=y_test, y_pred=y_pred)
+    accs.append(acc)
+    # auc =
+    f1_score_ = f1_score(y_true=y_test, y_pred=y_pred)
+    f1_scores.append(f1_score_)
+
+    print(f"Accuracy: {acc}")
+    print(f"F1-score: {f1_score_}")
+    print(classification_report(y_true=y_test, y_pred=y_pred))
+
 
 # Report the average of the accuracy, AUC, and F1 maybe?
+print(f"Average accuracy: {np.mean(accs)}")
+print(f"Average F1 score: {np.mean(f1_scores)}")
 
 sys.stdout.close()

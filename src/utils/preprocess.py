@@ -13,9 +13,10 @@ from src.utils.audio import (
     convert_audio_from_folder,
     equalize_audio_duration,
     extract_melspec,
+    generate_augmented_data,
     generate_segmented_data,
 )
-from src.utils.chore import load_obj_from_pkl, save_obj_to_pkl
+from src.utils.chore import diff, load_obj_from_pkl, save_obj_to_pkl
 
 # Non-class Utils
 
@@ -325,7 +326,35 @@ class FeatureExtractor(Preprocessor):
         except FileNotFoundError:
             if self.oversample:
                 print("Balancing data using data augmentation (oversampling)...")
-                # TODO : oversampling
+                # TODO : check oversampling
+                # Get which labels need to be oversampled
+                labels, labels_count = np.unique(
+                    self.current_labels, return_counts=True
+                )
+
+                most_data = np.max(labels_count)
+                new_data = []
+                new_labels = []
+
+                # For each label get the number of data needed to be balanced
+                for label, label_count in zip(labels, labels_count):
+                    diff_with_most = diff(label_count, most_data)
+
+                    # Get the data of the specified class ONLY
+                    indices = np.where(self.current_labels == label)
+
+                    # Generate augment
+                    augmented_data = generate_augmented_data(
+                        audio_datas=self.current_data[indices], n_aug=diff_with_most
+                    )
+
+                    # Save augmented data
+                    new_data.append(augmented_data)
+                    new_labels.append(np.full(shape=(diff_with_most), fill_value=label))
+
+                # Concat with current data and label
+                self.current_data = np.concatenate((self.current_data, new_data))
+                self.current_labels = np.concatenate((self.current_labels, new_labels))
 
             else:
                 print("Balancing data using undersampling...")

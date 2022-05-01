@@ -121,9 +121,9 @@ class Trainer:
             ]
 
             # Train for the 5th fold
-            if idx != 4:
-                print(f"Skipping fold {idx+1}...")
-                continue
+            # if idx != 4:
+            #     print(f"Skipping fold {idx+1}...")
+            #     continue
 
             model.fit(
                 x_folds,
