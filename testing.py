@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, classification_report, f1_score
 import tensorflow as tf
 from icecream import ic
 
-from src.utils.preprocess import FeatureExtractor, encode_label
+from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
 from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 
 DUMP_PATH = "dumps"
@@ -55,6 +55,10 @@ X_test, y_test = extractor.run(
 
 # Encode the y_test
 y_test = encode_label(y_test, pos_label="COVID-19")
+
+# Expand the dimension of the data because ResNet expects 3D
+X_test = expand_mel_spec(X_test)
+
 # ic(X_test.shape)
 # Get all models
 model_paths = [f for f in os.listdir(MODEL_DIR) if f.startswith(MODEL_PREFIX)]
