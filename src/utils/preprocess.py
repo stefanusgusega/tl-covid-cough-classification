@@ -129,7 +129,7 @@ class DataSegmenter(Preprocessor):
         return segmented_data, segmented_labels
 
     def run(
-        self, sampling_rate: int = 16000, sound_kind: str = "cough"
+        self, sampling_rate: int = 16000, sound_kind: str = "cough", **kwargs
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         This is the process of preprocessing that should be
@@ -138,7 +138,7 @@ class DataSegmenter(Preprocessor):
         """
         # ! Just do until segment audio
         # ! and then produce the segmented audio
-        self.convert_to_numpy(sampling_rate=sampling_rate)
+        self.convert_to_numpy(sampling_rate=sampling_rate, **kwargs)
         self.segment_audio(sampling_rate=sampling_rate, sound_kind=sound_kind)
 
         # Return series of data in (-1, 1) shape and the labels in (-1, 1) too
@@ -174,7 +174,7 @@ class DataframeBasedSegmenter(DataSegmenter):
         self.current_data = None
 
     def convert_to_numpy(self, sampling_rate: int = 16000, **kwargs):
-        super().convert_to_numpy(sampling_rate=sampling_rate)
+        super().convert_to_numpy(sampling_rate=sampling_rate, **kwargs)
 
         try:
             print("Loading numpy data from 'numpy_data.pkl'...")
