@@ -79,9 +79,6 @@ class DataSegmenter(Preprocessor):
             backup_every_stage=backup_every_stage,
             pickle_folder=pickle_folder,
         )
-        self.audio_folder_path = audio_folder_path
-        self.checkpoints = checkpoints
-
         if checkpoints is None or set(checkpoints.keys()) != set(
             [
                 "numpy_data",
@@ -89,6 +86,9 @@ class DataSegmenter(Preprocessor):
             ]
         ):
             checkpoints = dict(numpy_data=None, segment=None)
+
+        self.audio_folder_path = audio_folder_path
+        self.checkpoints = checkpoints
 
     @abstractmethod
     def convert_to_numpy(self, sampling_rate: int = 16000, **kwargs):
