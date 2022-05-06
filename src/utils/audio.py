@@ -454,7 +454,12 @@ def extract_melspec(
     # For each audio
     for audio in tqdm(audio_datas):
         mel_spec = librosa.feature.melspectrogram(
-            y=audio, sr=sampling_rate, window=signal.windows.hamming, **kwargs
+            y=audio,
+            sr=sampling_rate,
+            window=signal.windows.hamming,
+            win_length=512,
+            n_fft=512,
+            **kwargs,
         )
 
         if in_db:
