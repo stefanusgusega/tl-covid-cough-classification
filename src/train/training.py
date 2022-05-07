@@ -2,15 +2,14 @@
 Trainer module.
 """
 import os
-import warnings
 import numpy as np
+from sklearn.metrics import f1_score
 
 # from icecream import ic
 from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
 from src.model import ResNet50Model
-from src.utils.chore import generate_now_datetime
-from src.utils.preprocess import encode_label, expand_mel_spec
+from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
 from src.utils.model import (
     generate_checkpoint_callback,
     generate_tensorboard_callback,
@@ -31,7 +30,6 @@ class Trainer:
         audio_labels: np.ndarray,
         log_dir: dict,
         model_type: str = "resnet50",
-        model_args: dict = None,
     ) -> None:
         # If not one of available models, throw an exception
         if model_type not in AVAILABLE_MODELS:
@@ -44,12 +42,13 @@ class Trainer:
         self.y_full = audio_labels
 
         # Init array to save metrics and losses
-        self.test_metrics_arr = []
+        self.test_auc_arr = []
         # self.val_metrics_arr = []
         self.test_losses_arr = []
         # self.val_losses_arr = []
         # self.train_accuracy_arr = []
         self.test_accuracy_arr = []
+        self.test_f1_arr = []
 
         # Init array to save models for each fold
         self.models = []
@@ -58,20 +57,20 @@ class Trainer:
         self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
 
         self.model_type = model_type
-        self.model_args = model_args
 
         self.log_dir = log_dir
 
         self.using_tensorboard = False
 
-    def train(
+    def cross_validation(
         self,
         n_splits: int = 5,
         epochs: int = 100,
         batch_size: int = None,
+        feature_parameter: dict = None,
     ):
         """
-        Train the model
+        Perform cross validation to validate the hyperparameter of the model
         """
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -92,6 +91,22 @@ class Trainer:
                 self.y_full[test_index],
             )
 
+            feature_extractor = FeatureExtractor(backup_every_stage=False)
+            print(f"Extracting features for training data of fold {idx+1}/{n_splits}")
+            x_folds, y_folds = feature_extractor.run(
+                aggregated_data=x_folds, aggregated_labels=y_folds, **feature_parameter
+            )
+
+            test_feat_ext = FeatureExtractor(
+                backup_every_stage=False,
+                offset=feature_extractor.offset,
+                for_training=False,
+            )
+            print(f"Extracting features for testing data of fold {idx+1}/{n_splits}")
+            x_test, y_test = test_feat_ext.run(
+                aggregated_data=x_test, aggregated_labels=y_test, **feature_parameter
+            )
+
             # If the model is a resnet-50, the input should be expanded
             # Because ResNet expects a 3D shape
             if self.model_type == "resnet50":
@@ -107,7 +122,9 @@ class Trainer:
             # ic(folds_index[:10])
             # ic(test_index[:10])
 
-            model = self.generate_model().build_model()
+            model = self.generate_model(
+                model_args=dict(input_shape=(x_folds.shape[1], x_folds.shape[2], 1))
+            ).build_model()
 
             # Training for this fold
             print(f"Training for fold {idx+1}/{n_splits}...")
@@ -137,36 +154,101 @@ class Trainer:
             )
 
             # Evaluate model for outer loop
-            print(f"Evaluating model fold {idx + 1}/{n_splits}...")
-            # Accuracy from Keras seems inaccurate
-            loss, auc, acc = model.evaluate(x_test, y_test)
-
-            # Save the values for outer loop
-            self.test_metrics_arr.append(auc)
-            self.test_losses_arr.append(loss)
-
-            # Save accuracy
-            self.test_accuracy_arr.append(acc)
-
-            # Last save the model
-            self.models.append(model)
+            self.evaluate_fold(
+                fold_num=idx + 1,
+                n_splits=n_splits,
+                model=model,
+                x_test=x_test,
+                y_test=y_test,
+            )
 
             # Limit to only once
             # break
 
-        print(f"AUC-ROC average: {np.mean(self.test_metrics_arr)}")
+        print(f"AUC-ROC average: {np.mean(self.test_auc_arr)}")
         print(f"Accuracy average: {np.mean(self.test_accuracy_arr)}")
+        print(f"F1 average: {np.mean(self.test_f1_arr)}")
         print(f"Loss average: {np.mean(self.test_losses_arr)}")
-        print(f"AUC-ROC std: {np.std(self.test_metrics_arr)}")
+        print(f"AUC-ROC std: {np.std(self.test_auc_arr)}")
         print(f"Accuracy std: {np.std(self.test_accuracy_arr)}")
+        print(f"F1 std: {np.std(self.test_f1_arr)}")
         print(f"Loss std: {np.std(self.test_losses_arr)}")
 
-    def generate_model(self):
+    def train(
+        self, model_args, epochs: int, batch_size: int, model_filepath: str = None
+    ):
+        # Preprocess the training data
+        feature_extractor = FeatureExtractor(backup_every_stage=False)
+        x_train, y_train = feature_extractor.run(
+            aggregated_data=self.x_full, aggregated_labels=self.y_full
+        )
+
+        # If the model is a resnet-50, the input should be expanded
+        # Because ResNet expects a 3D shape
+        if self.model_type == "resnet50":
+            x_train = expand_mel_spec(x_train)
+
+        # Apply one hot encoding
+        y_train = encode_label(y_train, "COVID-19")
+
+        model = self.generate_model(model_args=model_args).build_model()
+
+        # Start training
+        print("Training...")
+
+        # Init dynamic callbacks list. Dynamic means should take different actions
+        # every fold. For example, checkpoint for each fold, tensorboard for each fold.
+        # Init with checkpoint callback and tensorboard callback
+        dynamic_callbacks = [
+            generate_tensorboard_callback(self.log_dir["tensorboard"]),
+            generate_checkpoint_callback(self.log_dir["checkpoint"]),
+        ]
+
+        model.fit(
+            x_train,
+            y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=[*self.callbacks_arr, *dynamic_callbacks],
+            shuffle=True,
+            verbose=2,
+        )
+
+        # Save model
+        print(f"Saving model {os.path.basename(model_filepath)}...")
+        model.save(model_filepath)
+
+        return model
+
+    def evaluate_fold(self, fold_num: int, n_splits: int, model, x_test, y_test):
+        print(f"Evaluating model fold {fold_num}/{n_splits}...")
+
+        loss, auc, acc = model.evaluate(x_test, y_test)
+
+        # Do prediction
+        y_proba = model.predict(x_test)
+
+        # Make label to 0 and 1
+        y_pred = np.where(y_proba >= 0.5, 1, 0)
+
+        # Save the values for outer loop
+        self.test_auc_arr.append(auc)
+        self.test_losses_arr.append(loss)
+
+        # Save accuracy
+        self.test_accuracy_arr.append(acc)
+
+        # Save F1 score
+        f_one = f1_score(y_true=y_test, y_pred=y_pred)
+        self.test_f1_arr.append(f_one)
+        print(f"F1 score fold {fold_num}: {f_one}")
+
+    def generate_model(self, model_args):
         """
         Generate the model based on model type with using model arguments
         """
         if self.model_type == "resnet50":
-            model = ResNet50Model(**self.model_args)
+            model = ResNet50Model(**model_args)
 
         return model
 
@@ -177,24 +259,3 @@ class Trainer:
         self.callbacks_arr.append(
             tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5)
         )
-
-    def save_models(self, path_to_save: str, save_format: str = "tf"):
-        """
-        Save the models for each fold.
-        """
-        if save_format not in ["tf", "h5"]:
-            warnings.warn("```save_format``` unavailable. Defaults to None.")
-            save_format = None
-
-        # Prefix for the file name
-        prefix = f"model_{generate_now_datetime()}"
-
-        for idx, model in enumerate(self.models):
-            print(f"Saving model for fold {idx+1}... ({idx+1}/{len(self.models)})")
-            # Define the filename
-            model_filename = os.path.join(path_to_save, f"{prefix}_{idx+1}")
-            # Save the model
-            model.save(model_filename, save_format=save_format)
-            print(
-                f"Model for fold {idx+1} saved at {model_filename} in {save_format} format."
-            )

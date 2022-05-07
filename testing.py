@@ -5,7 +5,12 @@ import argparse
 import os
 import sys
 import numpy as np
-from sklearn.metrics import accuracy_score, classification_report, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    f1_score,
+    roc_auc_score,
+)
 import tensorflow as tf
 from icecream import ic
 
@@ -46,11 +51,8 @@ X_test, y_test = extractor.run(
     X_test_raw,
     y_test_raw,
     sampling_rate=16000,
-    win_length=512,
     hop_length=128,
     n_mels=64,
-    n_fft=512,
-    is_normalize=False,
 )
 
 # Encode the y_test
@@ -73,14 +75,20 @@ for model_path in model_paths:
     model = tf.keras.models.load_model(os.path.join(MODEL_DIR, model_path))
 
     # Do prediction
-    y_pred = model.predict(X_test)
+    y_proba = model.predict(X_test)
 
     # Make label to 0 and 1
-    y_pred = np.where(y_pred >= 0.5, 1, 0)
+    y_pred = np.where(y_proba >= 0.5, 1, 0)
 
+    # Accuracy
     acc = accuracy_score(y_true=y_test, y_pred=y_pred)
     accs.append(acc)
-    # auc =
+
+    # ROC-AUC
+    auc = roc_auc_score(y_true=y_test, y_score=y_proba.flatten())
+    aucs.append(auc)
+
+    # F1-score
     f1_score_ = f1_score(y_true=y_test, y_pred=y_pred)
     f1_scores.append(f1_score_)
 
@@ -92,5 +100,6 @@ for model_path in model_paths:
 # Report the average of the accuracy, AUC, and F1 maybe?
 print(f"Average accuracy: {np.mean(accs)}")
 print(f"Average F1 score: {np.mean(f1_scores)}")
+print(f"Average ROC-AUC score: {np.mean(aucs)}")
 
 sys.stdout.close()

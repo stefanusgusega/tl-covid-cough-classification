@@ -289,24 +289,12 @@ class FeatureExtractor(Preprocessor):
     def equalize_duration(self):
         assert self.current_state == "aggregated"
 
-        try:
-            print("Loading equal duration data from 'equal_duration_data.pkl'...")
-            equal_duration_data = load_obj_from_pkl(
-                os.path.join(self.pickle_folder, "equal_duration_data.pkl")
-            )[0]
-            print("Equal duration data loaded.")
-        except FileNotFoundError:
-            equal_duration_data = equalize_audio_duration(
-                self.current_data, offset=self.offset
-            )
+        offset, equal_duration_data = equalize_audio_duration(
+            self.current_data, offset=self.offset
+        )
 
-            if self.backup_every_stage:
-                print("Creating backup for equal duration data...")
-                save_obj_to_pkl(
-                    (equal_duration_data, self.current_labels),
-                    os.path.join(self.pickle_folder, "equal_duration_data.pkl"),
-                )
-                print("Backup for equal duration data created.")
+        # Save offset value for this dataset
+        self.offset = offset
 
         # Update the data and state
         self.current_data = equal_duration_data
@@ -317,68 +305,50 @@ class FeatureExtractor(Preprocessor):
     def balance(self):
         assert self.current_state == "equalized"
 
-        try:
-            print("Loading balanced data from 'balanced_data.pkl'...")
-            balanced_data, balanced_labels = load_obj_from_pkl(
-                os.path.join(self.pickle_folder, "balanced_data.pkl")
+        if self.oversample:
+            print("Balancing data using data augmentation (oversampling)...")
+            # TODO : check oversampling
+            # Get which labels need to be oversampled
+            labels, labels_count = np.unique(self.current_labels, return_counts=True)
+
+            most_data = np.max(labels_count)
+            new_data = []
+            new_labels = []
+
+            # For each label get the number of data needed to be balanced
+            for label, label_count in zip(labels, labels_count):
+                diff_with_most = diff(label_count, most_data)
+
+                # If no difference with the most of data, then no need for augmentation
+                if diff_with_most == 0:
+                    continue
+
+                # Get the data of the specified class ONLY
+                indices = np.where(self.current_labels == label)
+
+                # Generate augment
+                augmented_data = generate_augmented_data(
+                    audio_datas=self.current_data[indices], n_aug=diff_with_most
+                )
+
+                # Save augmented data
+                new_data.append(augmented_data)
+                new_labels.append(np.full(shape=(diff_with_most), fill_value=label))
+
+            # Concat with current data and label
+            balanced_data = np.concatenate(
+                (self.current_data, np.concatenate(new_data))
             )
-            print("Balanced data loaded.")
-        except FileNotFoundError:
-            if self.oversample:
-                print("Balancing data using data augmentation (oversampling)...")
-                # TODO : check oversampling
-                # Get which labels need to be oversampled
-                labels, labels_count = np.unique(
-                    self.current_labels, return_counts=True
-                )
+            balanced_labels = np.concatenate(
+                (self.current_labels, np.concatenate(new_labels))
+            )
 
-                most_data = np.max(labels_count)
-                new_data = []
-                new_labels = []
-
-                # For each label get the number of data needed to be balanced
-                for label, label_count in zip(labels, labels_count):
-                    diff_with_most = diff(label_count, most_data)
-
-                    # If no difference with the most of data, then no need for augmentation
-                    if diff_with_most == 0:
-                        continue
-
-                    # Get the data of the specified class ONLY
-                    indices = np.where(self.current_labels == label)
-
-                    # Generate augment
-                    augmented_data = generate_augmented_data(
-                        audio_datas=self.current_data[indices], n_aug=diff_with_most
-                    )
-
-                    # Save augmented data
-                    new_data.append(augmented_data)
-                    new_labels.append(np.full(shape=(diff_with_most), fill_value=label))
-
-                # Concat with current data and label
-                balanced_data = np.concatenate(
-                    (self.current_data, np.concatenate(new_data))
-                )
-                balanced_labels = np.concatenate(
-                    (self.current_labels, np.concatenate(new_labels))
-                )
-
-            else:
-                print("Balancing data using undersampling...")
-                balanced_data, balanced_labels = RandomUnderSampler(
-                    sampling_strategy="majority", random_state=42
-                ).fit_resample(self.current_data, self.current_labels)
-            print("Data balanced.")
-
-            # Backup the balancing data stage
-            if self.backup_every_stage:
-                print("Creating backup for balanced data...")
-                save_obj_to_pkl(
-                    (balanced_data, balanced_labels),
-                    os.path.join(self.pickle_folder, "balanced_data.pkl"),
-                )
-                print("Backup for balanced data created.")
+        else:
+            print("Balancing data using undersampling...")
+            balanced_data, balanced_labels = RandomUnderSampler(
+                sampling_strategy="majority", random_state=42
+            ).fit_resample(self.current_data, self.current_labels)
+        print("Data balanced.")
 
         # Update the data, labels, and states
         self.current_data = balanced_data
@@ -393,21 +363,9 @@ class FeatureExtractor(Preprocessor):
         # If equalized, this is intended for testing
         assert self.current_state in ["balanced", "equalized"]
 
-        try:
-            print("Loading features from 'features.pkl'...")
-            features = load_obj_from_pkl(
-                os.path.join(self.pickle_folder, "features.pkl")
-            )[0]
-            print("Features loaded.")
-        except FileNotFoundError:
-            features = extract_melspec(self.current_data, **kwargs)
+        features = extract_melspec(self.current_data, **kwargs)
 
         res = features, self.current_labels.reshape(-1, 1)
-
-        # Save to pickle file for the final features
-        print("Saving features...")
-        save_obj_to_pkl(res, os.path.join(self.pickle_folder, "features.pkl"))
-        print("Features saved.")
 
         # Update data and state
         self.current_data, self.current_labels = res

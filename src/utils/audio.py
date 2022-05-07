@@ -367,7 +367,9 @@ def generate_segmented_data(
     return np.array(new_data), np.concatenate(labels_data)
 
 
-def equalize_audio_duration(audio_datas: np.ndarray, offset: int = None) -> np.ndarray:
+def equalize_audio_duration(
+    audio_datas: np.ndarray, offset: int = None
+) -> Tuple[int, np.ndarray]:
     if offset is None:
         # Get length of audio by mapping len function
         audio_length_func = np.vectorize(len)
@@ -401,7 +403,7 @@ def equalize_audio_duration(audio_datas: np.ndarray, offset: int = None) -> np.n
 
     print("Data equalized.")
 
-    return np.array(new_audio_datas)
+    return offset, np.array(new_audio_datas)
 
 
 def generate_augmented_data(
