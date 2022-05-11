@@ -11,8 +11,6 @@ from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 CHECKPOINT_PATH = os.path.join(DUMP_PATH, "checkpoints")
-MODEL_DIR = os.path.join(DUMP_PATH, "models")
-FEATURE_EXTRACTOR_DIR = os.path.join(DUMP_PATH, "feature-extractors")
 
 # os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
@@ -53,14 +51,10 @@ trainer = Trainer(
 )
 # trainer.set_early_stopping_callback()
 
-feature_extractor, model = trainer.train(
+trainer.cross_validation(
     epochs=epochs,
     batch_size=batch_size,
     feature_parameter=dict(n_mels=64, hop_length=256),
-    model_filepath=os.path.join(MODEL_DIR, "baseline_model"),
-    feature_extractor_filepath=os.path.join(
-        FEATURE_EXTRACTOR_DIR, "baseline_feature_extractor.pkl"
-    ),
 )
 
 sys.stdout.close()

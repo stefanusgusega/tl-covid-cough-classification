@@ -11,6 +11,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from src.utils.audio import (
     convert_audio_from_df,
     convert_audio_from_folder,
+    convert_audio_from_json,
     equalize_audio_duration,
     extract_melspec,
     generate_augmented_data,
@@ -194,6 +195,70 @@ class DataframeBasedSegmenter(DataSegmenter):
                     ext_colname="ext",
                 ),
                 checkpoint=self.checkpoints["numpy_data"],
+                **kwargs
+            )
+
+            if self.backup_every_stage:
+                print("Creating backup for numpy data...")
+                save_obj_to_pkl(
+                    (numpy_data, labels),
+                    os.path.join(self.pickle_folder, "numpy_data.pkl"),
+                )
+                print("Backup for numpy data created.")
+
+        # Update state
+        self.current_data = numpy_data
+        self.current_labels = labels
+        self.current_state = "converted"
+
+        return self.current_data, self.current_labels
+
+
+class JsonBasedSegmenter(DataSegmenter):
+    """
+    Preprocessor for data that referenced by a json.
+    """
+
+    def __init__(
+        self,
+        json: list,
+        filename_keyname: str,
+        label_keyname: str,
+        audio_folder_path: str,
+        checkpoints: dict = None,
+        backup_every_stage=True,
+        pickle_folder=None,
+    ) -> None:
+        super().__init__(
+            audio_folder_path=audio_folder_path,
+            checkpoints=checkpoints,
+            backup_every_stage=backup_every_stage,
+            pickle_folder=pickle_folder,
+        )
+
+        self.json = json
+        self.filename_keyname = filename_keyname
+        self.label_keyname = label_keyname
+
+        self.current_data = None
+
+    def convert_to_numpy(self, sampling_rate: int = 16000, **kwargs):
+        super().convert_to_numpy(sampling_rate=sampling_rate, **kwargs)
+
+        try:
+            print("Loading numpy data from 'numpy_data.pkl'...")
+            numpy_data, labels = load_obj_from_pkl(
+                os.path.join(self.pickle_folder, "numpy_data.pkl")
+            )
+            print("Numpy data loaded.")
+        except FileNotFoundError:
+            numpy_data, labels = convert_audio_from_json(
+                self.json,
+                sampling_rate=sampling_rate,
+                json_args=dict(
+                    filename_keyname=self.filename_keyname,
+                    label_keyname=self.label_keyname,
+                ),
                 **kwargs
             )
 

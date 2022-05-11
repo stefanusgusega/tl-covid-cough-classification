@@ -9,9 +9,10 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
 from src.model import ResNet50Model
+from src.utils.chore import save_obj_to_pkl
 from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
 from src.utils.model import (
-    generate_checkpoint_callback,
+    draw_roc,
     generate_tensorboard_callback,
     # lr_step_decay,
 )
@@ -54,7 +55,9 @@ class Trainer:
         self.models = []
 
         # Init callbacks array with learning rate scheduler
-        self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
+        self.callbacks_arr = [
+            tf.keras.callbacks.ReduceLROnPlateau(monitor="loss", verbose=1)
+        ]
 
         self.model_type = model_type
 
@@ -78,6 +81,11 @@ class Trainer:
         for idx, (folds_index, test_index) in enumerate(
             skf.split(self.x_full, self.y_full)
         ):
+            # Train for the specified fold
+            # if idx < 2:
+            #     print(f"Skipping fold {idx+1}...")
+            #     continue
+
             # Shuffle the index produced
             np.random.shuffle(folds_index)
             np.random.shuffle(test_index)
@@ -134,13 +142,7 @@ class Trainer:
             # Init with checkpoint callback and tensorboard callback
             dynamic_callbacks = [
                 generate_tensorboard_callback(self.log_dir["tensorboard"]),
-                generate_checkpoint_callback(self.log_dir["checkpoint"]),
             ]
-
-            # Train for the 5th fold
-            # if idx != 4:
-            #     print(f"Skipping fold {idx+1}...")
-            #     continue
 
             model.fit(
                 x_folds,
@@ -162,6 +164,15 @@ class Trainer:
                 y_test=y_test,
             )
 
+            # Draw ROC-AUC curve and then save it
+            print("Drawing ROC-AUC curve...")
+            draw_roc(
+                model=model,
+                x_test=x_test,
+                y_test=y_test,
+                plot_name=f"baseline_crossval_{idx+1}",
+            )
+
             # Limit to only once
             # break
 
@@ -175,12 +186,28 @@ class Trainer:
         print(f"Loss std: {np.std(self.test_losses_arr)}")
 
     def train(
-        self, model_args, epochs: int, batch_size: int, model_filepath: str = None
+        self,
+        epochs: int,
+        batch_size: int,
+        model_filepath: str = None,
+        feature_extractor_filepath: str = None,
+        feature_parameter: dict = None,
     ):
+        assert len(self.x_full) == len(
+            self.y_full
+        ), "x and y of training data have inequal length."
+
+        train_indexes = np.arange(len(self.y_full))
+
+        # Shuffling the indexes
+        np.random.shuffle(train_indexes)
+
         # Preprocess the training data
         feature_extractor = FeatureExtractor(backup_every_stage=False)
         x_train, y_train = feature_extractor.run(
-            aggregated_data=self.x_full, aggregated_labels=self.y_full
+            aggregated_data=self.x_full,
+            aggregated_labels=self.y_full,
+            **feature_parameter,
         )
 
         # If the model is a resnet-50, the input should be expanded
@@ -191,25 +218,19 @@ class Trainer:
         # Apply one hot encoding
         y_train = encode_label(y_train, "COVID-19")
 
-        model = self.generate_model(model_args=model_args).build_model()
+        model = self.generate_model(
+            model_args=dict(input_shape=(x_train.shape[1], x_train.shape[2], 1))
+        ).build_model()
 
         # Start training
         print("Training...")
-
-        # Init dynamic callbacks list. Dynamic means should take different actions
-        # every fold. For example, checkpoint for each fold, tensorboard for each fold.
-        # Init with checkpoint callback and tensorboard callback
-        dynamic_callbacks = [
-            generate_tensorboard_callback(self.log_dir["tensorboard"]),
-            generate_checkpoint_callback(self.log_dir["checkpoint"]),
-        ]
 
         model.fit(
             x_train,
             y_train,
             epochs=epochs,
             batch_size=batch_size,
-            callbacks=[*self.callbacks_arr, *dynamic_callbacks],
+            callbacks=self.callbacks_arr,
             shuffle=True,
             verbose=2,
         )
@@ -217,8 +238,17 @@ class Trainer:
         # Save model
         print(f"Saving model {os.path.basename(model_filepath)}...")
         model.save(model_filepath)
+        print("Model saved.")
 
-        return model
+        # Save feature extractor instance
+        print(
+            f"Saving feature extractor {os.path.basename(feature_extractor_filepath)}..."
+        )
+        save_obj_to_pkl(feature_extractor, feature_extractor_filepath)
+        print("Feature extractor saved.")
+
+        # Return feature extractor instance and model instance
+        return feature_extractor, model
 
     def evaluate_fold(self, fold_num: int, n_splits: int, model, x_test, y_test):
         print(f"Evaluating model fold {fold_num}/{n_splits}...")

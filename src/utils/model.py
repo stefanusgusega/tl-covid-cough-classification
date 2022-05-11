@@ -3,46 +3,10 @@ Model util functions that should not be in one class.
 """
 import math
 import os
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score, roc_curve
 import tensorflow as tf
-from src.model.resnet50 import ResNet50Model, resnet50_block
 from src.utils.chore import generate_now_datetime
-from src.utils.randomize import set_random_seed
-
-
-def hyperparameter_tune_resnet_model(
-    initial_model: ResNet50Model, first_dense_units, second_dense_units, learning_rates
-) -> tf.keras.Model:
-    """
-    Hyperparameters should contain these:
-    * first_dense_units
-    * second_dense_units
-    * learning_rates
-    * batch_size
-    """
-    set_random_seed()
-
-    # Build model
-    input_tensor = tf.keras.layers.Input(shape=initial_model.input_shape)
-
-    # ResNet50 block
-    model = resnet50_block(input_tensor=input_tensor)
-
-    model = tf.keras.layers.AveragePooling2D(name="avg_pool")(model)
-    model = tf.keras.layers.Flatten()(model)
-
-    # FC layers
-    model = tf.keras.layers.Dense(first_dense_units, activation="relu")(model)
-    model = tf.keras.layers.Dense(second_dense_units, activation="relu")(model)
-    model = tf.keras.layers.Dense(2, activation="softmax")(model)
-
-    model = tf.keras.models.Model(inputs=input_tensor, outputs=model, name="hp_tuning")
-
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rates),
-        loss=tf.keras.losses.BinaryCrossentropy(),
-        metrics=[tf.keras.metrics.AUC()],
-    )
-    return model
 
 
 def generate_tensorboard_callback(log_dir: str):
@@ -65,6 +29,33 @@ def generate_checkpoint_callback(parent_dir: str):
     return tf.keras.callbacks.ModelCheckpoint(
         filepath=specified_ckpt_dir, save_best_only=True
     )
+
+
+def draw_roc(
+    model,
+    x_test,
+    y_test,
+    plot_name: str,
+):
+    # Generate a no skill prediction (majority class)
+    ns_probs = [0 for _ in range(len(y_test))]
+
+    y_pred_proba = model.predict(x_test)
+    fpr, tpr, _ = roc_curve(y_true=y_test, y_score=y_pred_proba)
+    ns_fpr, ns_tpr, _ = roc_curve(y_true=y_test, y_score=ns_probs)
+    auc = roc_auc_score(y_true=y_test, y_score=y_pred_proba)
+
+    # Do plotting
+    plt.plot(fpr, tpr, label=f"AUC={auc}")
+    plt.plot(ns_fpr, ns_tpr, label="No Skill AUC=0.5")
+    plt.ylabel("True Positive Rate")
+    plt.xlabel("False Positive Rate")
+    plt.legend(loc=4)
+
+    # Save the plot
+    plt.savefig(os.path.join("dumps\\plots", f"{plot_name}.png"), transparent=True)
+
+    plt.show()
 
 
 def lr_step_decay(epoch, _):

@@ -235,6 +235,44 @@ def convert_audio_from_df(
     return np.array(samples), np.array(statuses)
 
 
+def convert_audio_from_json(
+    json: list,
+    sampling_rate: int = 16000,
+    json_args: dict = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+
+    # If json_args is't specified or the keys are incomplete,
+    # then use this defaults
+    if json_args is None or set(json_args.keys()) != set(
+        ["filename_keyname", "label_keyname"]
+    ):
+        json_args = dict(
+            filename_keyname="wav",
+            label_keyname="labels",
+        )
+
+    print("Converting audio to numpy array...")
+
+    samples = []
+    labels = []
+
+    for idx, metadata in tqdm(enumerate(json), total=len(json)):
+
+        try:
+            # Sampling rate is not returned because it will make worse memory usage
+            audio_data, _ = librosa.load(
+                metadata[json_args["filename_keyname"]], sr=sampling_rate
+            )
+
+            samples.append(audio_data)
+            labels.append(metadata[json_args["label_keyname"]])
+
+        except (ValueError, FileNotFoundError, RuntimeError, NoBackendError) as e:
+            print(f"Error occured on idx {idx}: {str(e)}")
+
+    return np.array(samples), np.array(labels)
+
+
 def convert_audio_from_folder(
     audio_folder_path: str,
     sampling_rate: int = 16000,
@@ -258,7 +296,8 @@ def convert_audio_from_folder(
     samples = []
 
     for idx, audio_file in tqdm(
-        enumerate(os.listdir(audio_folder_path)[checkpoint["last_index"] + 1 :])
+        enumerate(os.listdir(audio_folder_path)[checkpoint["last_index"] + 1 :]),
+        total=len(os.listdir(audio_folder_path)[checkpoint["last_index"] + 1 :]),
     ):
         # If not an audio file, skip to next file
         if audio_file.split(".")[-1] not in AUDIO_EXTENSIONS:
