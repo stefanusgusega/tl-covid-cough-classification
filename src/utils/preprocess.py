@@ -224,14 +224,12 @@ class JsonBasedSegmenter(DataSegmenter):
         json: list,
         filename_keyname: str,
         label_keyname: str,
-        audio_folder_path: str,
-        checkpoints: dict = None,
         backup_every_stage=True,
         pickle_folder=None,
     ) -> None:
+        # audio_folder_path set to None because currently doesn't need to specify
         super().__init__(
-            audio_folder_path=audio_folder_path,
-            checkpoints=checkpoints,
+            audio_folder_path=None,
             backup_every_stage=backup_every_stage,
             pickle_folder=pickle_folder,
         )
