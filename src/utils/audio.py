@@ -98,6 +98,9 @@ def generate_sneeze_segments(
     padding: float = 0.1,
     min_sneeze_len: float = 0.3,
 ):
+    # Define maximum of reasonable duration
+    max_duration = 2.0
+
     # First, split the audio based on the top db
     non_silent_indices = librosa.effects.split(x, top_db=20)
 
@@ -138,7 +141,11 @@ def generate_sneeze_segments(
     # Iterate the indices
     for indice_tuple in np.array(new_non_silent_indices):
         # Check if the indice reached the minimum len
-        if diff(indice_tuple[0], indice_tuple[1]) >= min_sneeze_len * sampling_rate:
+        if diff(indice_tuple[0], indice_tuple[1]) >= round(
+            min_sneeze_len * sampling_rate
+        ) and diff(indice_tuple[0], indice_tuple[1]) <= round(
+            max_duration * sampling_rate
+        ):
             # Pad the start
             start = indice_tuple[0] - padding_samples
             # Pad the end
@@ -328,16 +335,48 @@ def convert_audio_from_folder(
     return np.array(samples), np.full((len(samples),), name)
 
 
+# def segment_fixed_duration(
+#     original_audio,
+#     sampling_rate: int = 16000,
+#     duration: float = 1.0,
+#     padding: float = 0.1,
+# ):
+#     # State in samples unit
+#     duration_in_sample = round(duration * sampling_rate)
+#     padding_in_sample = round(padding * sampling_rate)
+
+#     # First, split the audio based on the top db
+#     non_silent_indices = librosa.effects.trim(original_audio)
+
+
+#     # Randomize start index
+#     start_index = np.random.choice(len(original_audio))
+
+#     actual_start = max(start_index - padding_in_sample, 0)
+#     actual_end = min(
+#         start_index + duration_in_sample - padding_in_sample, len(original_audio)
+#     )
+
+#     return original_audio[actual_start:actual_end]
+
+
 def segment_cough_and_label(
     original_audio: np.ndarray,
     covid_status: str,
     sampling_rate: int = 16000,
     sound_kind: str = "cough",
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Segment single audio data.
+    """
     if sound_kind == "cough":
         cough_segments, _ = generate_cough_segments(original_audio, sampling_rate)
     elif sound_kind == "sneeze":
         cough_segments = generate_sneeze_segments(original_audio, sampling_rate)
+    # elif sound_kind == "0.8s":
+    #     cough_segments = segment_fixed_duration(
+    #         original_audio, sampling_rate, duration=0.8
+    #     )
     segments = [np.array(segment) for segment in cough_segments]
 
     return np.array(segments), np.full((len(cough_segments),), covid_status)
