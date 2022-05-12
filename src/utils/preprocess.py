@@ -195,7 +195,7 @@ class DataframeBasedSegmenter(DataSegmenter):
                     ext_colname="ext",
                 ),
                 checkpoint=self.checkpoints["numpy_data"],
-                **kwargs
+                **kwargs,
             )
 
             if self.backup_every_stage:
@@ -257,8 +257,13 @@ class JsonBasedSegmenter(DataSegmenter):
                     filename_keyname=self.filename_keyname,
                     label_keyname=self.label_keyname,
                 ),
-                **kwargs
+                **kwargs,
             )
+
+            len_fun = np.vectorize(len)
+            len_arr = len_fun(numpy_data)
+            print(f"Average duration: {np.mean(len_arr)}")
+            print(f"Std duration: {np.std(len_arr)}")
 
             if self.backup_every_stage:
                 print("Creating backup for numpy data...")
