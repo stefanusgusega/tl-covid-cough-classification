@@ -12,6 +12,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 import tensorflow as tf
+from src.utils.model import draw_roc
 
 # from icecream import ic
 
@@ -81,6 +82,8 @@ auc = roc_auc_score(y_true=y_test, y_score=y_proba.flatten())
 
 # F1-score
 f1_score_ = f1_score(y_true=y_test, y_pred=y_pred)
+
+draw_roc(model=model, x_test=X_test, y_test=y_test, plot_name="baseline_testing")
 
 print(f"Accuracy: {acc}")
 print(f"AUC: {auc}")
