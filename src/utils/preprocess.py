@@ -137,8 +137,7 @@ class DataSegmenter(Preprocessor):
         run on single dataset, and then this method only produce the
         segmented audio data and segmented label.
         """
-        # ! Just do until segment audio
-        # ! and then produce the segmented audio
+
         self.convert_to_numpy(sampling_rate=sampling_rate, **kwargs)
         self.segment_audio(sampling_rate=sampling_rate, sound_kind=sound_kind)
 
