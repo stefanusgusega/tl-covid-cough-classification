@@ -291,6 +291,7 @@ class FolderDataSegmenter(DataSegmenter):
         checkpoints: dict = None,
         backup_every_stage=True,
         pickle_folder=None,
+        name: str = None,
     ) -> None:
         super().__init__(
             audio_folder_path=audio_folder_path,
@@ -298,6 +299,8 @@ class FolderDataSegmenter(DataSegmenter):
             backup_every_stage=backup_every_stage,
             pickle_folder=pickle_folder,
         )
+
+        self.name = name
 
     def convert_to_numpy(self, sampling_rate: int = 16000, **kwargs):
         super().convert_to_numpy(sampling_rate, **kwargs)
@@ -314,6 +317,7 @@ class FolderDataSegmenter(DataSegmenter):
                 sampling_rate=sampling_rate,
                 checkpoint_folder_path=self.pickle_folder,
                 checkpoint=self.checkpoints["numpy_data"],
+                name=self.name,
             )
 
             if self.backup_every_stage:
