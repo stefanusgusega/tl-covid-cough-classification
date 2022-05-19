@@ -10,10 +10,8 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     f1_score,
-    roc_auc_score,
 )
 import tensorflow as tf
-from src.utils.model import draw_roc
 
 # from icecream import ic
 
@@ -24,10 +22,10 @@ DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 MODEL_DIR = os.path.join(DUMP_PATH, "models")
 DATA_PATH = os.path.join(DUMP_PATH, "data")
-OFFSET = 13315
+OFFSET = 23680
 
 sys.stdout = open(
-    os.path.join("logs", "testing", f"{generate_now_datetime()}.txt"),
+    os.path.join("logs", "testing", f"pretrain_{generate_now_datetime()}.txt"),
     "w",
     encoding="utf-8",
 )
@@ -46,7 +44,7 @@ X_test_raw, y_test_raw = load_obj_from_pkl(DATA_FILE)
 
 # Preprocessing dataset
 extractor = FeatureExtractor(
-    pickle_folder=os.path.join(DATA_PATH, "covid-test", "preprocessed"),
+    pickle_folder=os.path.join(DATA_PATH, "pretrain-test", "preprocessed"),
     for_training=False,
     offset=OFFSET,
 )
@@ -59,7 +57,7 @@ X_test, y_test = extractor.run(
 )
 
 # Encode the y_test
-y_test = encode_label(y_test, pos_label="COVID-19")
+y_test = encode_label(y_test, pos_label="cough")
 
 # Expand the dimension of the data because ResNet expects 3D
 X_test = expand_mel_spec(X_test)
@@ -70,25 +68,27 @@ model = tf.keras.models.load_model(os.path.join(MODEL_DIR, MODEL))
 # ic(model_paths)
 
 # Do prediction
-y_proba = model.predict(X_test)
+y_softmax = model.predict(X_test)
 
 # Make label to 0 and 1
-y_pred = np.where(y_proba >= 0.5, 1, 0)
+y_pred = np.argmax(y_softmax, axis=1)
+y_test = np.argmax(y_test, axis=1)
 
 # Accuracy
 acc = accuracy_score(y_true=y_test, y_pred=y_pred)
 
-# ROC-AUC
-auc = roc_auc_score(y_true=y_test, y_score=y_proba.flatten())
+# Get F1-scores for every class
+f1_scores = f1_score(y_true=y_test, y_pred=y_pred, average=None)
 
-# F1-score
-f1_score_ = f1_score(y_true=y_test, y_pred=y_pred)
-
-draw_roc(model=model, x_test=X_test, y_test=y_test, plot_name="baseline_testing")
+# Get macro f1 score
+macro_f1 = f1_score(y_true=y_test, y_pred=y_pred, average="macro")
 
 print(f"Accuracy: {acc}")
-print(f"AUC: {auc}")
-print(f"F1-score: {f1_score_}")
+print(f"F1-score for class 0: {f1_scores[0]}")
+print(f"F1-score for class 1 (cough): {f1_scores[1]}")
+print(f"F1-score for class 2: {f1_scores[2]}")
+print(f"Macro F1-score: {macro_f1}")
+
 print(classification_report(y_true=y_test, y_pred=y_pred))
 print("Confusion matrix")
 print(confusion_matrix(y_true=y_test, y_pred=y_pred))

@@ -4,6 +4,7 @@ ResNet50 Pretrain Model class
 from typing import Tuple
 import tensorflow as tf
 from src.model.base import BaseModel
+from src.model.builder import resnet50_block
 
 
 # ! In progress
@@ -22,34 +23,56 @@ class ResNet50PretrainModel(BaseModel):
         self.include_resnet_top = include_resnet_top
         self.model_type = "pretrain-resnet50"
 
-    def build_model(self, metrics, n_classes: int):
+    def build_model(self, metrics=None, n_classes: int = 3):
         if metrics is None:
-            metrics = [tf.keras.metris.AUC()]
+            metrics = ["accuracy"]
 
-        self.model = tf.keras.Sequential()
+        input_tensor = tf.keras.layers.Input(shape=self.input_shape)
 
-        # ResNet block
-        self.model.add(
-            tf.keras.applications.resnet50.ResNet50(
-                include_top=self.include_resnet_top,
-                weights=self.initial_weights,
-                input_shape=self.input_shape,
-            )
-        )
+        # ResNet50 block
+        model = resnet50_block(input_tensor=input_tensor)
 
         # The top layer of ResNet
-        self.model.add(tf.keras.layers.AveragePooling2D())
-        self.model.add(tf.keras.layers.Flatten())
+        model = tf.keras.layers.GlobalAveragePooling2D(name="avg_pool")(model)
+        # model = tf.keras.layers.Dropout(rate=0.1)(model)
+        # model = tf.keras.layers.Flatten()(model)
 
         # The fully connected layers
-        self.model.add(tf.keras.layers.Dense(512, activation="relu"))
-        self.model.add(tf.keras.layers.Dense(64, activation="relu"))
-        self.model.add(tf.keras.layers.Dense(n_classes, activation="softmax"))
+        model = tf.keras.layers.Dense(512, activation="relu")(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Activation("relu")(model)
+        # model = tf.keras.layers.Dense(256, activation="relu")(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # # model = tf.keras.layers.Activation("relu")(model)
 
-        self.model.compile(
+        # model = tf.keras.layers.Dense(128, activation="relu")(model)
+        # model = tf.keras.layers.Dropout(rate=0.2)(model)
+        # model = tf.keras.layers.Activation("relu")(model)
+
+        model = tf.keras.layers.Dense(64, activation="relu")(model)
+        # model = tf.keras.layers.Activation("relu")(model)
+
+        model = tf.keras.layers.Dense(n_classes, activation="softmax")(model)
+
+        model = tf.keras.models.Model(
+            inputs=input_tensor, outputs=model, name="ResNet50"
+        )
+
+        # lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        #     initial_learning_rate=1e-3, decay_steps=1000, decay_rate=0.95
+        # )
+
+        model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-            loss=tf.keras.losses.BinaryCrossentropy(),
+            # optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3),
+            # loss=Flooding(),
+            loss=tf.keras.losses.CategoricalCrossentropy(),
             metrics=metrics,
         )
 
-        return self.model
+        # Save to attribute
+        self.model = model
+
+        print(self.model.summary())
+
+        return model

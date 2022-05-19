@@ -1,4 +1,4 @@
 """
 Training module.
 """
-from .training import Trainer
+from .training import Trainer, Pretrainer

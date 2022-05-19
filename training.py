@@ -56,7 +56,7 @@ trainer = Trainer(
 feature_extractor, model = trainer.train(
     epochs=epochs,
     batch_size=batch_size,
-    feature_parameter=dict(n_mels=64, hop_length=256),
+    feature_parameter=dict(n_mels=64, hop_length=128),
     model_filepath=os.path.join(MODEL_DIR, "baseline_model"),
     feature_extractor_filepath=os.path.join(
         FEATURE_EXTRACTOR_DIR, "baseline_feature_extractor.pkl"

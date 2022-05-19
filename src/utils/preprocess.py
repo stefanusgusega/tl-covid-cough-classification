@@ -4,6 +4,7 @@ Data preprocessing util functions
 from abc import abstractmethod
 import os
 from typing import Tuple
+from icecream import ic
 import numpy as np
 import pandas as pd
 from keras.utils.np_utils import to_categorical
@@ -33,14 +34,37 @@ def expand_mel_spec(old_mel_specs: np.ndarray):
 
 
 def encode_label(labels: np.ndarray, pos_label: str = None):
+    if pos_label is None:
+        raise Exception("Please specify which is the positive label")
     # If binary, encode it according to positive label and negative label first
     if len(np.unique(labels)) == 2:
-        if pos_label is None:
-            raise Exception("Please specify which is the positive label")
         labels = np.where(labels == pos_label, 1, 0).reshape(-1, 1)
         return labels
 
-    return to_categorical(labels)
+    # If multiclass, here we go
+    # Get labels
+    ic(labels[:20])
+    unique_labels = np.unique(labels)
+    print(f"Unique labels: {np.unique(labels, return_counts=True)}")
+
+    # Substract unique labels with pos label
+    final_unique_labels = sorted(set(unique_labels) - set([pos_label]))
+    ic(final_unique_labels)
+
+    formatted_labels = labels
+
+    # Set not positive to integer
+    for idx, label in enumerate(final_unique_labels):
+        # Because positive class is reserved
+        if idx >= 1:
+            idx += 1
+        formatted_labels = np.where(labels == label, idx, formatted_labels)
+        print(f"Class {idx}: {label}")
+
+    # Change the positive label
+    formatted_labels = np.where(formatted_labels == pos_label, 1, formatted_labels)
+    ic(np.unique(formatted_labels, return_counts=True))
+    return to_categorical(formatted_labels.astype(int))
 
 
 class Preprocessor:
@@ -416,9 +440,16 @@ class FeatureExtractor(Preprocessor):
 
         else:
             print("Balancing data using undersampling...")
-            balanced_data, balanced_labels = RandomUnderSampler(
-                sampling_strategy="majority", random_state=42
-            ).fit_resample(self.current_data, self.current_labels)
+            # Can be simplified with sampling strategy not minority for all
+            # But it will be redo the experiment from the beginning
+            if len(np.unique(self.current_labels)) == 2:
+                balanced_data, balanced_labels = RandomUnderSampler(
+                    sampling_strategy="majority", random_state=42
+                ).fit_resample(self.current_data, self.current_labels)
+            else:
+                balanced_data, balanced_labels = RandomUnderSampler(
+                    sampling_strategy="not minority", random_state=42
+                ).fit_resample(self.current_data, self.current_labels)
         print("Data balanced.")
 
         # Update the data, labels, and states
