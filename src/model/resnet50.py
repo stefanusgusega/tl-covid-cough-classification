@@ -9,9 +9,6 @@ import tensorflow as tf
 from src.model.base import BaseModel
 from src.model.builder import resnet50_block
 
-# Enable tensorflow math module
-# tf.compat.v1.enable_eager_execution()
-
 
 class Flooding(tf.keras.losses.Loss):
     """

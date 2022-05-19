@@ -17,6 +17,7 @@ from src.utils.model import (
 )
 
 AVAILABLE_MODELS = ["resnet50", "pretrain-resnet50"]
+AVAILABLE_TRANSFER_LEARNING_MODES = ["weight_init", "feat_ext"]
 
 
 class Trainer:
@@ -550,3 +551,59 @@ class Pretrainer(Trainer):
         model = ResNet50PretrainModel(**model_args)
 
         return model
+
+
+class TransferLearningTrainer(Trainer):
+    """
+    The class aimed for transfer learning.
+    """
+
+    def __init__(
+        self,
+        audio_datas: np.ndarray,
+        audio_labels: np.ndarray,
+        mode: str,
+        log_dir: dict,
+        discard_512: bool = False,
+        model_type: str = "resnet50",
+    ) -> None:
+        super().__init__(audio_datas, audio_labels, log_dir, model_type)
+
+        if mode not in AVAILABLE_TRANSFER_LEARNING_MODES:
+            raise Exception(
+                f"The mode should be one of these: {AVAILABLE_TRANSFER_LEARNING_MODES}"
+                f"Found: {mode}."
+            )
+        self.mode = mode
+        self.discard_512 = discard_512
+
+    def load_weights(self, model_path):
+        # Load pretrained model
+        loaded_model = tf.keras.models.load_model(model_path)
+
+        # Initiate new fully connected layers
+        if not self.discard_512:
+            # Just load until 512 dense
+            new_model = loaded_model.layers[-2].output
+
+        else:
+            # Load only until avg pooling layer
+            new_model = loaded_model.layers[-3].output
+            new_model = tf.keras.layers.Dense(512, activation="relu", name="new_512")(
+                new_model
+            )
+
+        new_model = tf.keras.layers.Dense(32, activation="relu", name="new_32")(
+            new_model
+        )
+        new_model = tf.keras.layers.Dense(1, activation="sigmoid", name="new_output")(
+            new_model
+        )
+
+        new_model = tf.keras.models.Model(inputs=loaded_model.input, outputs=new_model)
+
+        new_model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+            loss=tf.keras.losses.BinaryCrossentropy(),
+            metrics=[tf.keras.metrics.AUC(), "accuracy"],
+        )

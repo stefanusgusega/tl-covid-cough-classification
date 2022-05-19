@@ -7,7 +7,6 @@ from src.model.base import BaseModel
 from src.model.builder import resnet50_block
 
 
-# ! In progress
 class ResNet50PretrainModel(BaseModel):
     """
     Pretrain ResNet50 Model for cough classification
