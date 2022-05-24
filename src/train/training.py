@@ -9,6 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
 from src.model import ResNet50Model
 from src.model.pretrain import ResNet50PretrainModel
+from src.model.transfer import TransferLearningModel
 from src.utils.chore import save_obj_to_pkl
 from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
 from src.utils.model import (
@@ -17,7 +18,6 @@ from src.utils.model import (
 )
 
 AVAILABLE_MODELS = ["resnet50", "pretrain-resnet50"]
-AVAILABLE_TRANSFER_LEARNING_MODES = ["weight_init", "feat_ext"]
 
 
 class Trainer:
@@ -71,10 +71,13 @@ class Trainer:
         epochs: int = 100,
         batch_size: int = None,
         feature_parameter: dict = None,
+        other_model_args: dict = None,
     ):
         """
         Perform cross validation to validate the hyperparameter of the model
         """
+
+        self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
@@ -115,11 +118,8 @@ class Trainer:
                 aggregated_data=x_test, aggregated_labels=y_test, **feature_parameter
             )
 
-            # If the model is a resnet-50, the input should be expanded
-            # Because ResNet expects a 3D shape
-            if self.model_type in ["resnet50", "pretrain-resnet50"]:
-                x_folds = expand_mel_spec(x_folds)
-                x_test = expand_mel_spec(x_test)
+            x_folds = expand_mel_spec(x_folds)
+            x_test = expand_mel_spec(x_test)
 
             # Apply one hot encoding
             y_folds = encode_label(y_folds, "COVID-19")
@@ -132,6 +132,7 @@ class Trainer:
 
             model = self.generate_model(
                 model_args=dict(input_shape=(x_folds.shape[1], x_folds.shape[2], 1))
+                | other_model_args
             ).build_model()
 
             # Training for this fold
@@ -265,7 +266,13 @@ class Trainer:
         y_proba = model.predict(x_test)
 
         # Make label to 0 and 1
-        y_pred = np.where(y_proba >= 0.5, 1, 0)
+        # If width == 1 then sigmoid based
+        if y_proba.shape[1] == 1:
+            y_pred = np.where(y_proba >= 0.5, 1, 0)
+        # Else, change it by looking for argmax
+        else:
+            y_pred = np.argmax(y_proba, axis=1)
+            y_test = np.argmax(y_test, axis=1)
 
         # Save the values for outer loop
         self.test_auc_arr.append(auc)
@@ -314,6 +321,7 @@ class Pretrainer(Trainer):
         epochs: int = 100,
         batch_size: int = None,
         feature_parameter: dict = None,
+        other_model_args: dict = None,
     ):
         """
         Perform cross validation to validate the hyperparameter of the pretrained model
@@ -386,6 +394,7 @@ class Pretrainer(Trainer):
 
             model = self.generate_model(
                 model_args=dict(input_shape=(x_folds.shape[1], x_folds.shape[2], 1))
+                | other_model_args
             ).build_model(n_classes=3)
 
             # Training for this fold
@@ -558,52 +567,129 @@ class TransferLearningTrainer(Trainer):
     The class aimed for transfer learning.
     """
 
-    def __init__(
+    def cross_validation(
         self,
-        audio_datas: np.ndarray,
-        audio_labels: np.ndarray,
-        mode: str,
-        log_dir: dict,
-        discard_512: bool = False,
-        model_type: str = "resnet50",
-    ) -> None:
-        super().__init__(audio_datas, audio_labels, log_dir, model_type)
+        n_splits: int = 5,
+        epochs: int = 100,
+        batch_size: int = None,
+        feature_parameter: dict = None,
+        other_model_args: dict = None,
+    ):
+        """
+        Perform cross validation to validate the hyperparameter of the model
+        """
 
-        if mode not in AVAILABLE_TRANSFER_LEARNING_MODES:
-            raise Exception(
-                f"The mode should be one of these: {AVAILABLE_TRANSFER_LEARNING_MODES}"
-                f"Found: {mode}."
+        self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
+
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+
+        for idx, (folds_index, test_index) in enumerate(
+            skf.split(self.x_full, self.y_full)
+        ):
+            # Train for the specified fold
+            # if idx < 3:
+            #     print(f"Skipping fold {idx+1}...")
+            #     continue
+
+            # Shuffle the index produced
+            np.random.shuffle(folds_index)
+            np.random.shuffle(test_index)
+
+            x_folds, x_test = (
+                self.x_full[folds_index],
+                self.x_full[test_index],
             )
-        self.mode = mode
-        self.discard_512 = discard_512
-
-    def load_weights(self, model_path):
-        # Load pretrained model
-        loaded_model = tf.keras.models.load_model(model_path)
-
-        # Initiate new fully connected layers
-        if not self.discard_512:
-            # Just load until 512 dense
-            new_model = loaded_model.layers[-2].output
-
-        else:
-            # Load only until avg pooling layer
-            new_model = loaded_model.layers[-3].output
-            new_model = tf.keras.layers.Dense(512, activation="relu", name="new_512")(
-                new_model
+            y_folds, y_test = (
+                self.y_full[folds_index],
+                self.y_full[test_index],
             )
 
-        new_model = tf.keras.layers.Dense(32, activation="relu", name="new_32")(
-            new_model
-        )
-        new_model = tf.keras.layers.Dense(1, activation="sigmoid", name="new_output")(
-            new_model
-        )
+            feature_extractor = FeatureExtractor(backup_every_stage=False, offset=23680)
+            print(f"Extracting features for training data of fold {idx+1}/{n_splits}")
+            x_folds, y_folds = feature_extractor.run(
+                aggregated_data=x_folds, aggregated_labels=y_folds, **feature_parameter
+            )
 
-        new_model = tf.keras.models.Model(inputs=loaded_model.input, outputs=new_model)
+            test_feat_ext = FeatureExtractor(
+                backup_every_stage=False,
+                offset=23680,
+                for_training=False,
+            )
+            print(f"Extracting features for testing data of fold {idx+1}/{n_splits}")
+            x_test, y_test = test_feat_ext.run(
+                aggregated_data=x_test, aggregated_labels=y_test, **feature_parameter
+            )
 
-        new_model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-            loss=tf.keras.losses.BinaryCrossentropy(),
-            metrics=[tf.keras.metrics.AUC(), "accuracy"],
-        )
+            x_folds = expand_mel_spec(x_folds)
+            x_test = expand_mel_spec(x_test)
+
+            # Apply one hot encoding
+            y_folds = encode_label(y_folds, "COVID-19")
+            y_test = encode_label(y_test, "COVID-19")
+
+            # y_folds = encode_label(y_folds, "cough")
+            # y_test = encode_label(y_test, "cough")
+
+            ic(np.unique(y_folds, return_counts=True))
+            ic(np.unique(y_test, return_counts=True))
+            # ic(folds_index[:10])
+            # ic(test_index[:10])
+
+            model = self.generate_model(
+                model_args=dict(input_shape=(x_folds.shape[1], x_folds.shape[2], 1))
+                | other_model_args
+            ).build_model()
+
+            # Training for this fold
+            print(f"Training for fold {idx+1}/{n_splits}...")
+
+            # Init dynamic callbacks list. Dynamic means should take different actions
+            # every fold. For example, checkpoint for each fold, tensorboard for each fold.
+            # Init with checkpoint callback and tensorboard callback
+            dynamic_callbacks = [
+                generate_tensorboard_callback(self.log_dir["tensorboard"]),
+            ]
+
+            model.fit(
+                x_folds,
+                y_folds,
+                validation_data=(x_test, y_test),
+                epochs=epochs,
+                batch_size=batch_size,
+                callbacks=[*self.callbacks_arr, *dynamic_callbacks],
+                shuffle=True,
+                verbose=2,
+            )
+
+            # Evaluate model for outer loop
+            self.evaluate_fold(
+                fold_num=idx + 1,
+                n_splits=n_splits,
+                model=model,
+                x_test=x_test,
+                y_test=y_test,
+            )
+
+            # Draw ROC-AUC curve and then save it
+            # print("Drawing ROC-AUC curve...")
+            # draw_roc(
+            #     model=model,
+            #     x_test=x_test,
+            #     y_test=y_test,
+            #     plot_name=f"baseline_crossval_{idx+1}",
+            # )
+
+            # Limit to only once
+            # break
+
+        print(f"AUC-ROC average: {np.mean(self.test_auc_arr)}")
+        print(f"Accuracy average: {np.mean(self.test_accuracy_arr)}")
+        print(f"F1 average: {np.mean(self.test_f1_arr)}")
+        print(f"Loss average: {np.mean(self.test_losses_arr)}")
+        print(f"AUC-ROC std: {np.std(self.test_auc_arr)}")
+        print(f"Accuracy std: {np.std(self.test_accuracy_arr)}")
+        print(f"F1 std: {np.std(self.test_f1_arr)}")
+        print(f"Loss std: {np.std(self.test_losses_arr)}")
+
+    def generate_model(self, model_args):
+        return TransferLearningModel(**model_args)
