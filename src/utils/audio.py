@@ -524,6 +524,7 @@ def extract_melspec(
     is_normalize: bool = True,
     in_db: bool = True,
     var_norm: bool = False,
+    is_mel_spec: bool = True,
     **kwargs,
 ) -> np.ndarray:
     # Initiate new container
@@ -533,14 +534,26 @@ def extract_melspec(
 
     # For each audio
     for audio in tqdm(audio_datas):
-        mel_spec = librosa.feature.melspectrogram(
-            y=audio,
-            sr=sampling_rate,
-            window=signal.windows.hamming,
-            win_length=512,
-            n_fft=512,
-            **kwargs,
-        )
+        if is_mel_spec:
+            mel_spec = librosa.feature.melspectrogram(
+                y=audio,
+                sr=sampling_rate,
+                window=signal.windows.hamming,
+                win_length=512,
+                n_fft=512,
+                **kwargs,
+            )
+
+        else:
+            mel_spec = librosa.feature.mfcc(
+                y=audio,
+                sr=sampling_rate,
+                n_mfcc=13,
+                window=signal.windows.hamming,
+                win_length=512,
+                n_fft=512,
+                **kwargs,
+            )
 
         if in_db:
             # Change to decibels instead of power spectrogram
