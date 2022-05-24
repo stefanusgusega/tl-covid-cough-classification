@@ -1,7 +1,6 @@
 """
 ResNet50Model class.
 """
-# from icecream import ic
 from typing import Tuple
 
 # import numpy as np
