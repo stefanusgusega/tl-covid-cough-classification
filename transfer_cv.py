@@ -1,21 +1,22 @@
 """
-Main program for COUGHVID dataset
+Main program for COVID classification
 """
 import argparse
 import os
 import sys
 
-from src.train import Trainer
+from src.train import TransferLearningTrainer
 from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 CHECKPOINT_PATH = os.path.join(DUMP_PATH, "checkpoints")
+PRETRAINED_MODEL_PATH = os.path.join(DUMP_PATH, "models", "pretrained_model")
 
 # os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
 sys.stdout = open(
-    os.path.join("logs", "coughvid", f"{generate_now_datetime()}.txt"),
+    os.path.join("logs", "coughvid", f"transfer_cv_{generate_now_datetime()}.txt"),
     "w",
     encoding="utf-8",
 )
@@ -34,6 +35,7 @@ DATA_FILE = args.d
 
 X_train, y_train = load_obj_from_pkl(
     os.path.join(DUMP_PATH, "data", "covid-train", DATA_FILE)
+    # os.path.join(DUMP_PATH, "data", "pretrain-train", DATA_FILE)
 )
 
 print(f"Epoch: {epochs}")
@@ -43,19 +45,25 @@ print(f"Data file: {DATA_FILE}")
 # model_args = {"input_shape": (X_train.shape[1], X_train.shape[2], 1)}
 log_dir = dict(tensorboard=LOG_PATH, checkpoint=CHECKPOINT_PATH)
 
-trainer = Trainer(
+trainer = TransferLearningTrainer(
     audio_datas=X_train,
     audio_labels=y_train,
     # model_args=model_args,
     log_dir=log_dir,
+)
+
+other_model_args = dict(
+    mode="weight_init",
+    pretrained_model_path=PRETRAINED_MODEL_PATH,
+    open_layer=2,
 )
 # trainer.set_early_stopping_callback()
 
 trainer.cross_validation(
     epochs=epochs,
     batch_size=batch_size,
-    feature_parameter=dict(n_mels=64, hop_length=128, is_mel_spec=False),
-    other_model_args={},
+    feature_parameter=dict(n_mels=64, hop_length=128),
+    other_model_args=other_model_args,
 )
 
 sys.stdout.close()
