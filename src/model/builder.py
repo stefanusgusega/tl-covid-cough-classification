@@ -26,6 +26,8 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
     # Define name basis
     conv_name_base = f"res{stage}{block}_branch"
     bn_name_base = f"bn{stage}{block}_branch"
+    act_name_base = f"act{stage}{block}_branch"
+    add_name_base = f"add{stage}{block}_branch"
 
     # First component of main path
     model = tf.keras.layers.Conv2D(
@@ -38,7 +40,7 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
         # kernel_regularizer=tf.keras.regularizers.L2(KERNEL_PENALTY),
     )(input_tensor)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2a")(model)
-    model = tf.keras.layers.Activation("relu")(model)
+    model = tf.keras.layers.Activation("relu", name=f"{act_name_base}2a")(model)
 
     # Second component of main path
     model = tf.keras.layers.Conv2D(
@@ -51,7 +53,7 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
         # kernel_regularizer=tf.keras.regularizers.L2(KERNEL_PENALTY),
     )(model)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2b")(model)
-    model = tf.keras.layers.Activation("relu")(model)
+    model = tf.keras.layers.Activation("relu", name=f"{act_name_base}2b")(model)
 
     # Third component of main path
     model = tf.keras.layers.Conv2D(
@@ -66,8 +68,8 @@ def identity_block(input_tensor, middle_kernel_size, filters, stage, block):
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2c")(model)
 
     # Final step: Add shortcut value, which is input tensor, to main path, and pass it through a RELU activation
-    model = tf.keras.layers.Add()([model, input_tensor])
-    model = tf.keras.layers.Activation("relu")(model)
+    model = tf.keras.layers.Add(name=add_name_base)([model, input_tensor])
+    model = tf.keras.layers.Activation("relu", name=f"{act_name_base}_final")(model)
 
     return model
 
@@ -92,6 +94,8 @@ def convolutional_block(
     # Define name basis
     conv_name_base = f"res{stage}{block}_branch"
     bn_name_base = f"bn{stage}{block}_branch"
+    act_name_base = f"act{stage}{block}_branch"
+    add_name_base = f"add{stage}{block}_branch"
 
     # First component of main path
     model = tf.keras.layers.Conv2D(
@@ -102,7 +106,7 @@ def convolutional_block(
         kernel_initializer="glorot_uniform",
     )(input_tensor)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2a")(model)
-    model = tf.keras.layers.Activation("relu")(model)
+    model = tf.keras.layers.Activation("relu", name=f"{act_name_base}2a")(model)
 
     # Second component of main path
     model = tf.keras.layers.Conv2D(
@@ -114,7 +118,7 @@ def convolutional_block(
         kernel_initializer="glorot_uniform",
     )(model)
     model = tf.keras.layers.BatchNormalization(axis=3, name=f"{bn_name_base}2b")(model)
-    model = tf.keras.layers.Activation("relu")(model)
+    model = tf.keras.layers.Activation("relu", name=f"{act_name_base}2b")(model)
 
     # Third component of main path
     model = tf.keras.layers.Conv2D(
@@ -141,8 +145,8 @@ def convolutional_block(
     )
 
     # Final step: Add shortcut value to main path, and pass it through RELU activation
-    model = tf.keras.layers.Add()([model, shortcut])
-    model = tf.keras.layers.Activation("relu")(model)
+    model = tf.keras.layers.Add(name=add_name_base)([model, shortcut])
+    model = tf.keras.layers.Activation("relu", name=f"{act_name_base}_final")(model)
 
     return model
 
