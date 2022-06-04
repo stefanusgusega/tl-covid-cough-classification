@@ -53,9 +53,9 @@ trainer = TransferLearningTrainer(
 )
 
 other_model_args = dict(
-    mode="weight_init",
+    mode="feat_ext",
     pretrained_model_path=PRETRAINED_MODEL_PATH,
-    open_layer=2,
+    open_layer=1,
 )
 # trainer.set_early_stopping_callback()
 

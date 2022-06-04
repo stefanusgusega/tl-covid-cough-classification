@@ -20,23 +20,24 @@ from src.utils.model import draw_roc
 from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
 from src.utils.chore import generate_now_datetime, load_obj_from_pkl
 
+# Argument parser
+parser = argparse.ArgumentParser()
+parser.add_argument("-m")
+parser.add_argument("-td")
+parser.add_argument("-o", type=int, default=13315)
+args = parser.parse_args()
+
 DUMP_PATH = "dumps"
 LOG_PATH = os.path.join(DUMP_PATH, "logs")
 MODEL_DIR = os.path.join(DUMP_PATH, "models")
 DATA_PATH = os.path.join(DUMP_PATH, "data")
-OFFSET = 13315
+OFFSET = args.o
 
 sys.stdout = open(
     os.path.join("logs", "testing", f"{generate_now_datetime()}.txt"),
     "w",
     encoding="utf-8",
 )
-
-# Argument parser
-parser = argparse.ArgumentParser()
-parser.add_argument("-m")
-parser.add_argument("-td")
-args = parser.parse_args()
 
 MODEL = args.m
 DATA_FILE = os.path.join(DATA_PATH, args.td)
@@ -84,7 +85,7 @@ auc = roc_auc_score(y_true=y_test, y_score=y_proba.flatten())
 # F1-score
 f1_score_ = f1_score(y_true=y_test, y_pred=y_pred)
 
-draw_roc(model=model, x_test=X_test, y_test=y_test, plot_name="baseline_testing")
+draw_roc(model=model, x_test=X_test, y_test=y_test, plot_name=args.m)
 
 print(f"Accuracy: {acc}")
 print(f"AUC: {auc}")

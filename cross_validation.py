@@ -54,7 +54,7 @@ trainer = Trainer(
 trainer.cross_validation(
     epochs=epochs,
     batch_size=batch_size,
-    feature_parameter=dict(n_mels=64, hop_length=128, is_mel_spec=False),
+    feature_parameter=dict(n_mels=64, hop_length=128),
     other_model_args={},
 )
 
