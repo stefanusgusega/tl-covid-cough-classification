@@ -52,6 +52,9 @@ class ResNet50Model(BaseModel):
 
         # ResNet50 block
         model = resnet50_block(input_tensor=input_tensor)
+        # model = tf.keras.applications.resnet50.ResNet50(
+        #     include_top=False, weights=None, input_tensor=input_tensor, pooling="avg"
+        # )
 
         # The top layer of ResNet
         model = tf.keras.layers.GlobalAveragePooling2D(name="avg_pool")(model)

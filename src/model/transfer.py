@@ -51,6 +51,12 @@ class TransferLearningModel(BaseModel):
             # If feat ext, initiate new layers but based on open layer
             new_model = self.initiate_new_layers(loaded_model=loaded_model)
 
+        # new_model = tf.keras.layers.Dense(256, activation="relu", name="new_256")(
+        #     new_model
+        # )
+        # new_model = tf.keras.layers.Dense(128, activation="relu", name="new_128")(
+        #     new_model
+        # )
         new_model = tf.keras.layers.Dense(32, activation="relu", name="new_32")(
             new_model
         )
@@ -61,9 +67,8 @@ class TransferLearningModel(BaseModel):
         new_model = tf.keras.models.Model(inputs=loaded_model.input, outputs=new_model)
 
         # Open all
-        if self.open_layer != 0:
-            print("Deactivating trainable...")
-            self.deactivate_trainable(new_model)
+        print("Deactivating trainable...")
+        self.deactivate_trainable(new_model)
 
         new_model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
@@ -72,6 +77,9 @@ class TransferLearningModel(BaseModel):
         )
 
         print(new_model.summary())
+        for layer in new_model.layers:
+            if layer.trainable:
+                print(layer.name)
         return new_model
 
     def initiate_new_layers(self, loaded_model):
@@ -82,9 +90,10 @@ class TransferLearningModel(BaseModel):
 
         elif self.open_layer == 1:
             last_layer_index = -99
+            # last_layer_index = -101
 
         elif self.open_layer == 2:
-            last_layer_index = -36
+            last_layer_index = -37
 
         new_model = loaded_model.layers[last_layer_index].output
 
@@ -140,7 +149,9 @@ class TransferLearningModel(BaseModel):
             new_model = tf.keras.layers.GlobalAveragePooling2D(name="new_avg_pool")(
                 new_model
             )
-            new_model = tf.keras.layers.Dense(512, activation="relu")(new_model)
+            new_model = tf.keras.layers.Dense(512, activation="relu", name="new_512")(
+                new_model
+            )
 
         elif self.open_layer == 2:
             # conv5
@@ -167,7 +178,11 @@ class TransferLearningModel(BaseModel):
             new_model = tf.keras.layers.GlobalAveragePooling2D(name="new_avg_pool")(
                 new_model
             )
-            new_model = tf.keras.layers.Dense(512, activation="relu")(new_model)
+            print("Global Avg Pooling initialized.")
+            new_model = tf.keras.layers.Dense(512, activation="relu", name="new_512")(
+                new_model
+            )
+            print("Dense 512 initialized.")
 
         return new_model
 
@@ -176,21 +191,15 @@ class TransferLearningModel(BaseModel):
         # Open layer 1 == 'retrain start from conv4' (weight_init), 'freeze until conv4' (feat_ext)
         # Open layer 2 == 'retrain start from conv5' (weight_init), 'freeze until conv5' (feat_ext)
 
-        # TODO : add condition when open layer 0, because it is needed to freeze only not FC
-        assert (
-            self.open_layer != 0
-        ), f"Cannot deactivate trainable, because open_layer == {self.open_layer}"
-
-        if self.open_layer == 1:
+        if self.open_layer == 0:
+            # If feat ext then freeze until before -3, if weight init, no freeze
+            last_layer_index = -3 if self.mode == "feat_ext" else 0
+        elif self.open_layer == 1:
             last_layer_index = -98
+            # last_layer_index = -100
         elif self.open_layer == 2:
             last_layer_index = -36  # Activate conv4 and so on
 
         # Iterate the layers
         for layer in model.layers[:last_layer_index]:
             layer.trainable = False
-
-        # If not discarding 512 dense layer from pretrained
-        # last_layer_index = -3 if self.discard_512 else -2
-        # last_layer_index = -4 if self.discard_512 else -3
-        # last_layer_index = -36  # Activate conv5 and so on
