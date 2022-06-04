@@ -10,7 +10,6 @@ import tensorflow as tf
 from src.model import ResNet50Model
 from src.model.pretrain import ResNet50PretrainModel
 from src.model.transfer import TransferLearningModel
-from src.utils.chore import save_obj_to_pkl
 from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
 from src.utils.model import (
     generate_tensorboard_callback,
@@ -55,9 +54,7 @@ class Trainer:
         self.models = []
 
         # Init callbacks array with learning rate scheduler
-        self.callbacks_arr = [
-            tf.keras.callbacks.ReduceLROnPlateau(monitor="loss", verbose=1)
-        ]
+        self.callbacks_arr = [tf.keras.callbacks.ReduceLROnPlateau(verbose=1)]
 
         self.model_type = model_type
 
@@ -191,7 +188,7 @@ class Trainer:
         epochs: int,
         batch_size: int,
         model_filepath: str = None,
-        feature_extractor_filepath: str = None,
+        other_model_args: dict = None,
         feature_parameter: dict = None,
     ):
         assert len(self.x_full) == len(
@@ -213,14 +210,14 @@ class Trainer:
 
         # If the model is a resnet-50, the input should be expanded
         # Because ResNet expects a 3D shape
-        if self.model_type in ["resnet50", "pretrain-resnet50"]:
-            x_train = expand_mel_spec(x_train)
+        x_train = expand_mel_spec(x_train)
 
         # Apply one hot encoding
         y_train = encode_label(y_train, "COVID-19")
 
         model = self.generate_model(
             model_args=dict(input_shape=(x_train.shape[1], x_train.shape[2], 1))
+            | other_model_args
         ).build_model()
 
         ic(np.unique(y_train, return_counts=True))
@@ -230,6 +227,10 @@ class Trainer:
 
         dynamic_callbacks = [
             generate_tensorboard_callback(self.log_dir["tensorboard"]),
+        ]
+
+        self.callbacks_arr = [
+            tf.keras.callbacks.ReduceLROnPlateau(monitor="loss", verbose=1)
         ]
 
         model.fit(
@@ -248,14 +249,14 @@ class Trainer:
         print("Model saved.")
 
         # Save feature extractor instance
-        print(
-            f"Saving feature extractor {os.path.basename(feature_extractor_filepath)}..."
-        )
-        save_obj_to_pkl(feature_extractor, feature_extractor_filepath)
-        print("Feature extractor saved.")
+        # print(
+        #     f"Saving feature extractor {os.path.basename(feature_extractor_filepath)}..."
+        # )
+        # save_obj_to_pkl(feature_extractor, feature_extractor_filepath)
+        # print("Feature extractor saved.")
 
         # Return feature extractor instance and model instance
-        return feature_extractor, model
+        return model
 
     def evaluate_fold(self, fold_num: int, n_splits: int, model, x_test, y_test):
         print(f"Evaluating model fold {fold_num}/{n_splits}...")
@@ -457,7 +458,7 @@ class Pretrainer(Trainer):
         epochs: int,
         batch_size: int,
         model_filepath: str = None,
-        feature_extractor_filepath: str = None,
+        other_model_args: dict = None,
         feature_parameter: dict = None,
     ):
         assert len(self.x_full) == len(
@@ -487,6 +488,7 @@ class Pretrainer(Trainer):
 
         model = self.generate_model(
             model_args=dict(input_shape=(x_train.shape[1], x_train.shape[2], 1))
+            | other_model_args
         ).build_model()
 
         ic(np.unique(y_train, return_counts=True))
@@ -513,15 +515,15 @@ class Pretrainer(Trainer):
         model.save(model_filepath)
         print("Model saved.")
 
-        # Save feature extractor instance
-        print(
-            f"Saving feature extractor {os.path.basename(feature_extractor_filepath)}..."
-        )
-        save_obj_to_pkl(feature_extractor, feature_extractor_filepath)
-        print("Feature extractor saved.")
+        # # Save feature extractor instance
+        # print(
+        #     f"Saving feature extractor {os.path.basename(feature_extractor_filepath)}..."
+        # )
+        # save_obj_to_pkl(feature_extractor, feature_extractor_filepath)
+        # print("Feature extractor saved.")
 
         # Return feature extractor instance and model instance
-        return feature_extractor, model
+        return model
 
     def evaluate_fold(self, fold_num: int, n_splits: int, model, x_test, y_test):
         print(f"Evaluating model fold {fold_num}/{n_splits}...")
@@ -690,6 +692,81 @@ class TransferLearningTrainer(Trainer):
         print(f"Accuracy std: {np.std(self.test_accuracy_arr)}")
         print(f"F1 std: {np.std(self.test_f1_arr)}")
         print(f"Loss std: {np.std(self.test_losses_arr)}")
+
+    def train(
+        self,
+        epochs: int,
+        batch_size: int,
+        model_filepath: str = None,
+        other_model_args: dict = None,
+        feature_parameter: dict = None,
+    ):
+        assert len(self.x_full) == len(
+            self.y_full
+        ), "x and y of training data have inequal length."
+
+        train_indexes = np.arange(len(self.y_full))
+
+        # Shuffling the indexes
+        np.random.shuffle(train_indexes)
+
+        # Preprocess the training data
+        feature_extractor = FeatureExtractor(backup_every_stage=False, offset=23680)
+        x_train, y_train = feature_extractor.run(
+            aggregated_data=self.x_full,
+            aggregated_labels=self.y_full,
+            **feature_parameter,
+        )
+
+        # If the model is a resnet-50, the input should be expanded
+        # Because ResNet expects a 3D shape
+        x_train = expand_mel_spec(x_train)
+
+        # Apply one hot encoding
+        y_train = encode_label(y_train, "COVID-19")
+
+        model = self.generate_model(
+            model_args=dict(input_shape=(x_train.shape[1], x_train.shape[2], 1))
+            | other_model_args
+        ).build_model()
+
+        ic(np.unique(y_train, return_counts=True))
+
+        # Start training
+        print("Training...")
+
+        dynamic_callbacks = [
+            generate_tensorboard_callback(self.log_dir["tensorboard"]),
+        ]
+
+        self.callbacks_arr = [
+            tf.keras.callbacks.ReduceLROnPlateau(monitor="loss", verbose=1)
+        ]
+
+        model.fit(
+            x_train,
+            y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=[*self.callbacks_arr, *dynamic_callbacks],
+            shuffle=True,
+            verbose=2,
+        )
+
+        # Save model
+        print(f"Saving model {os.path.basename(model_filepath)}...")
+        model.save(model_filepath)
+        print("Model saved.")
+
+        # Save feature extractor instance
+        # print(
+        #     f"Saving feature extractor {os.path.basename(feature_extractor_filepath)}..."
+        # )
+        # save_obj_to_pkl(feature_extractor, feature_extractor_filepath)
+        # print("Feature extractor saved.")
+
+        # Return feature extractor instance and model instance
+        return model
 
     def generate_model(self, model_args):
         return TransferLearningModel(**model_args)
