@@ -385,7 +385,7 @@ def segment_cough_and_label(
 def generate_segmented_data(
     samples_data: np.ndarray,
     audio_labels: np.ndarray,
-    checkpoint_folder_path: str,
+    checkpoint_folder_path: str = None,
     checkpoint: dict = None,
     sampling_rate: int = 16000,
     sound_kind: str = "cough",
@@ -429,16 +429,17 @@ def generate_segmented_data(
         labels_data.append(labels)
 
         # Checkpointing
-        save_obj_to_pkl(
-            dict(
-                datas=np.array(new_data),
-                labels=np.concatenate(np.array(labels_data)),
-                last_index=idx,
-            ),
-            os.path.join(
-                checkpoint_folder_path, f"{specific_ckpt_folder_name}/segmented.pkl"
-            ),
-        )
+        if checkpoint_folder_path is not None:
+            save_obj_to_pkl(
+                dict(
+                    datas=np.array(new_data),
+                    labels=np.concatenate(np.array(labels_data)),
+                    last_index=idx,
+                ),
+                os.path.join(
+                    checkpoint_folder_path, f"{specific_ckpt_folder_name}/segmented.pkl"
+                ),
+            )
 
     labels_data = np.array(labels_data)
 
