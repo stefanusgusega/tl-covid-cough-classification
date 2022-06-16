@@ -65,6 +65,7 @@ for idx, (pred_res, true_res) in enumerate(zip(y_pred, y_test)):
     )
     fig.colorbar(img, ax=ax, format="%+2.0f dB")
     ax.set_title(f"Log mel spectrogram for cough segment no. {idx}")
+    plt.show()
 
     # Print the true result and actual result
     print(f"True result: {true_res}")
