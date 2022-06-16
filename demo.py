@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.utils.audio import generate_segmented_data
-from src.utils.preprocess import FeatureExtractor, encode_label, expand_mel_spec
+from src.utils.preprocess import FeatureExtractor, expand_mel_spec
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", default="feat_ext")
@@ -37,9 +37,6 @@ X_test, y_test = feature_extractor.run(
     hop_length=128,
 )
 
-# Encode the y_test
-y_test = encode_label(y_test, pos_label="COVID-19")
-
 # Expand dimension because ResNet expects 3D shape
 X_test = expand_mel_spec(X_test)
 
@@ -57,4 +54,4 @@ print(f"There are {len(X_test)} segments of cough.")
 for idx, (pred_res, true_res) in enumerate(zip(y_pred, y_test)):
     print(f"Result for segment no. {idx}")
     print(f"True result: {true_res}")
-    print(f"Actual result: {pred_res}")
+    print(f"Actual result: {'COVID-19' if pred_res else 'healthy'}")
