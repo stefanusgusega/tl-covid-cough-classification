@@ -3,6 +3,7 @@ Demonstration program
 """
 import argparse
 import librosa
+import librosa.display
 import numpy as np
 import tensorflow as tf
 
@@ -56,5 +57,8 @@ print(f"There are {len(X_test)} segments of cough.")
 
 for idx, (pred_res, true_res) in enumerate(zip(y_pred, y_test)):
     print(f"Result for segment no. {idx}")
+    librosa.display.specshow(
+        data=X_test[idx], sr=16000, x_axis="time", y_axis="mel", fmax=8000
+    )
     print(f"True result: {true_res}")
     print(f"Actual result: {'COVID-19' if pred_res else 'healthy'}")
