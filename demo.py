@@ -57,14 +57,14 @@ y_pred = np.where(y_proba >= 0.5, 1, 0)
 print(f"There are {len(X_test)} segments of cough.")
 
 for idx, (pred_res, true_res) in enumerate(zip(y_pred, y_test)):
-    print(f"Result for segment no. {idx}")
+    print(f"Result for segment no. {idx+1}")
     # Show the spectrogram
     fig, ax = plt.subplots()
     img = librosa.display.specshow(
         data=X_test[idx], sr=16000, x_axis="time", y_axis="mel", fmax=8000, ax=ax
     )
     fig.colorbar(img, ax=ax, format="%+2.0f dB")
-    ax.set_title(f"Log mel spectrogram for cough segment no. {idx}")
+    ax.set_title(f"Log mel spectrogram for cough segment no. {idx+1}")
     plt.show()
 
     # Print the true result and actual result
