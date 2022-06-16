@@ -31,7 +31,7 @@ audio_segments, final_labels = generate_segmented_data(
 )
 
 feature_extractor = FeatureExtractor(
-    backup_every_stage=False, offset=23680, for_training=False
+    backup_every_stage=False, offset=offset_dict[args.mode], for_training=False
 )
 X_test, y_test = feature_extractor.run(
     aggregated_data=audio_segments,
