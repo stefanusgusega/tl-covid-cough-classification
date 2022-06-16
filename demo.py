@@ -12,14 +12,15 @@ from src.utils.preprocess import FeatureExtractor, expand_mel_spec
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", default="feat_ext")
 parser.add_argument("--audio")
+parser.add_argument("--model")
 parser.add_argument("--label", default="COVID-19")
 args = parser.parse_args()
 
-model_path_dict = {
-    "baseline": "dumps/models/baseline_model",
-    "weight_init": "dumps/models/best_exp_weight",
-    "feat_ext": "dumps/models/best_exp_feat",
-}
+# model_path_dict = {
+#     "baseline": "dumps/models/baseline_model",
+#     "weight_init": "dumps/models/best_exp_weight",
+#     "feat_ext": "dumps/models/best_exp_feat",
+# }
 
 # Load the audio data
 audio_data, _ = librosa.load(args.audio, sr=16000)
@@ -28,7 +29,7 @@ audio_segments, final_labels = generate_segmented_data(
 )
 
 feature_extractor = FeatureExtractor(
-    backup_every_stage=False, offset=23380, for_training=False
+    backup_every_stage=False, offset=23680, for_training=False
 )
 X_test, y_test = feature_extractor.run(
     aggregated_data=audio_segments,
@@ -41,7 +42,7 @@ X_test, y_test = feature_extractor.run(
 X_test = expand_mel_spec(X_test)
 
 # Load model based on what mode this demo is
-model = tf.keras.models.load_model(model_path_dict[args.mode])
+model = tf.keras.models.load_model(args.model)
 
 # Do prediction
 y_proba = model.predict(X_test)
