@@ -409,7 +409,10 @@ def generate_segmented_data(
     labels_data = list(checkpoint["labels"])
 
     # Create new folder to save checkpoint
-    specific_ckpt_folder_name = create_folder(checkpoint_folder_path, "segmented_ckpt")
+    if checkpoint_folder_path is not None:
+        specific_ckpt_folder_name = create_folder(
+            checkpoint_folder_path, "segmented_ckpt"
+        )
 
     print("Segmenting audio data...")
 
