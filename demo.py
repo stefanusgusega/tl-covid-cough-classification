@@ -25,7 +25,7 @@ args = parser.parse_args()
 # Load the audio data
 audio_data, _ = librosa.load(args.audio, sr=16000)
 audio_segments, final_labels = generate_segmented_data(
-    samples_data=audio_data.reshape((-1, 1)), audio_labels=np.array([[args.label]])
+    samples_data=audio_data.reshape((1, -1)), audio_labels=np.array([[args.label]])
 )
 
 feature_extractor = FeatureExtractor(
