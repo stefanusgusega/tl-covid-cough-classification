@@ -43,13 +43,13 @@ X_test, y_test = feature_extractor.run(
 )
 
 # Expand dimension because ResNet expects 3D shape
-X_test = expand_mel_spec(X_test)
+X_test_expanded = expand_mel_spec(X_test)
 
 # Load model based on what mode this demo is
 model = tf.keras.models.load_model(args.model)
 
 # Do prediction
-y_proba = model.predict(X_test)
+y_proba = model.predict(X_test_expanded)
 
 # Make label to 0 and 1
 y_pred = np.where(y_proba >= 0.5, 1, 0)
