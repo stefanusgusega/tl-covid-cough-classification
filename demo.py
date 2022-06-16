@@ -22,6 +22,8 @@ args = parser.parse_args()
 #     "feat_ext": "dumps/models/best_exp_feat",
 # }
 
+offset_dict = {"baseline": 13315, "tl": 23680}
+
 # Load the audio data
 audio_data, _ = librosa.load(args.audio, sr=16000)
 audio_segments, final_labels = generate_segmented_data(
